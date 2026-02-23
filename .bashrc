@@ -87,12 +87,12 @@ fi
 # colored GCC warnings and errors
 #export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 
-export PATH_OPTEE=~/optee
-export PATH_darknetz=~/darknetz
-export PATH_tz_datasets=~/tz_datasets
+export PATH_OPTEE=~/src/optee
+export PATH_darknetz=~/src/darknetz
+export PATH_tz_datasets=~/src/tz_datasets
 # sparrow
 export PLATFORM=rpi3
-export SPARROW_ROOTDIR=$HOME/sparrow
+export SPARROW_ROOTDIR=$HOME/src/sparrow
 export CANTRIP_RUST_VERSION=nightly
 export CARGO_HOME=$HOME/.cargo
 
@@ -126,5 +126,13 @@ if ! shopt -oq posix; then
 fi
 
 if [ -f $HOME/.cargo/env ]; then
-	. "$HOME/.cargo/env"
+	. $HOME/.cargo/env
+fi
+
+if [ -f $HOME/.deno/env ]; then
+	. $HOME/.deno/env
+fi
+
+if [ -f $HOME/.local/share/bash-completion/completions/deno.bash ]; then
+	source $HOME/.local/share/bash-completion/completions/deno.bash
 fi

@@ -16,9 +16,15 @@ if [ -n "$BASH_VERSION" ]; then
     fi
 fi
 
+LIBPATH=$HOME/lib/ssl
+
 # set PATH so it includes user's private bin if it exists
 if [ -d "$HOME/bin" ] ; then
     PATH="$HOME/bin:$PATH"
+fi
+
+if [ -d "$HOME/AppImage" ] ; then
+    PATH="$HOME/AppImage:$PATH"
 fi
 
 if [ -d "$HOME/bin/gcc-arm-11.2-2022.02-x86_64-aarch64-none-linux-gnu/bin" ] ; then
@@ -33,4 +39,3 @@ fi
 if [ -d "$HOME/.local/bin" ] ; then
     PATH="$HOME/.local/bin:$PATH"
 fi
-. "$HOME/.cargo/env"
