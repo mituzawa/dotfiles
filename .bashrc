@@ -79,7 +79,7 @@ if [ -x /usr/bin/dircolors ]; then
     #alias dir='dir --color=auto'
     #alias vdir='vdir --color=auto'
 
-#    alias grep='grep --color=auto'
+    alias grep='grep --color=auto'
     alias fgrep='fgrep --color=auto'
     alias egrep='egrep --color=auto'
 fi
@@ -87,9 +87,10 @@ fi
 # colored GCC warnings and errors
 #export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 
-export PATH_OPTEE=~/src/optee
-export PATH_darknetz=~/src/darknetz
-export PATH_tz_datasets=~/src/tz_datasets
+# optee
+export PATH_OPTEE=$HOME/src/optee
+export PATH_darknetz=$HOME/src/darknetz
+export PATH_tz_datasets=$HOME/src/tz_datasets
 # sparrow
 export PLATFORM=rpi3
 export SPARROW_ROOTDIR=$HOME/src/sparrow
@@ -135,4 +136,8 @@ fi
 
 if [ -f $HOME/.local/share/bash-completion/completions/deno.bash ]; then
 	source $HOME/.local/share/bash-completion/completions/deno.bash
+fi
+
+if [ -d $HOME/.wasmtime ]; then
+	export WASMTIME_HOME="$HOME/.wasmtime"
 fi
