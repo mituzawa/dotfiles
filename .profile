@@ -16,13 +16,7 @@ if [ -n "$BASH_VERSION" ]; then
     fi
 fi
 
-LIBPATH=$HOME/lib/ssl
-
-# set PATH so it includes user's private bin if it exists
-if [ -d "$HOME/bin" ] ; then
-    PATH="$HOME/bin:$PATH"
-fi
-
+# added begin
 if [ -d "$HOME/AppImage" ] ; then
     PATH="$HOME/AppImage:$PATH"
 fi
@@ -33,6 +27,17 @@ fi
 
 if [ -d "$HOME/bin/arm-gnu-toolchain-12.3.rel1-x86_64-aarch64-none-linux-gnu/bin" ] ; then
     PATH="$HOME/bin/arm-gnu-toolchain-12.3.rel1-x86_64-aarch64-none-linux-gnu/bin:$PATH"
+fi
+
+if [ -d $HOME/.wasmtime ]; then
+	PATH="$WASMTIME_HOME/bin:$PATH"
+fi
+
+LIBPATH=$HOME/lib/ssl
+
+# set PATH so it includes user's private bin if it exists
+if [ -d "$HOME/bin" ] ; then
+    PATH="$HOME/bin:$PATH"
 fi
 
 # set PATH so it includes user's private bin if it exists
