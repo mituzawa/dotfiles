@@ -17,8 +17,8 @@ if [ -n "$BASH_VERSION" ]; then
 fi
 
 # added begin
-if [ -d "$HOME/AppImage" ] ; then
-    PATH="$HOME/AppImage:$PATH"
+if [ -d "/opt/nvim-linux-x86_64/bin" ] ; then
+    PATH="/opt/nvim-linux-x86_64/bin:$PATH"
 fi
 
 if [ -d "$HOME/bin/gcc-arm-11.2-2022.02-x86_64-aarch64-none-linux-gnu/bin" ] ; then
