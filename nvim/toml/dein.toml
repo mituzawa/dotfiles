@@ -1,0 +1,175 @@
+# denops shared server
+[[plugins]]
+repo = 'vim-denops/denops-shared-server.vim'
+
+# Vim-surround
+[[plugins]]
+repo = 'tpope/vim-surround'
+
+# Quick-run
+[[plugins]]
+repo = 'thinca/vim-quickrun'
+
+# emmet
+[[plugins]]
+repo = 'mattn/emmet-vim'
+
+
+# yank-around
+[[plugins]]
+repo = 'LeafCage/yankround.vim'
+
+
+# Fern Filer
+[[plugins]]
+repo = 'lambdalisue/nerdfont.vim'
+
+[[plugins]]
+repo = 'lambdalisue/fern.vim'
+
+[[plugins]]
+repo = 'lambdalisue/fern-renderer-nerdfont.vim'
+
+
+[[plugins]]
+repo = 'lambdalisue/glyph-palette.vim'
+hook_add = '''
+" For Fern
+let g:fern#default_hidden=1
+let g:fern#renderer = "nerdfont"
+" set color on icon
+augroup my-glyph-palette
+  autocmd! *
+  autocmd FileType fern call glyph_palette#apply()
+  autocmd FileType nerdtree,startify call glyph_palette#apply()
+augroup END
+'''
+# colorscheme
+
+[[plugins]]
+repo = 'joshdick/onedark.vim'
+on_event = 'VimEnter'
+hooks_file = '~/.config/nvim/lua/option/colorscheme.lua'
+
+[[plugins]]
+repo = '4513ECHO/vim-colors-hatsunemiku'
+
+
+
+# lightline
+[[plugins]]
+repo = 'itchyny/lightline.vim'
+hook_add = '''
+    let g:lightline = {
+    \   'colorscheme': 'wombat',
+    \   'active': {
+    \       'left': [ [ 'mode', 'paste' ],
+    \               [ 'gitbranch', 'readonly', 'filename', 'modified' ] ]
+    \   },
+    \   'component_function': {
+    \       'gitbranch': 'gitbranch#name'
+    \   },
+    \   'separator': { 'left': "\ue0b0", 'right': "\ue0b2" },
+    \   'subseparator': { 'left': "\ue0b1", 'right': "\ue0b3" },
+    \ }
+    set laststatus=2
+    set noshowmode
+'''
+
+
+# pum
+
+[[plugins]]
+repo = 'Shougo/pum.vim'
+
+[[plugins]]
+repo = 'lambdalisue/mr.vim'
+
+
+# ddu
+
+[[plugins]]
+repo = 'Shougo/ddu.vim'
+
+[[plugins]]
+repo = 'Shougo/ddu-ui-ff'
+
+[[plugins]]
+repo = 'Shougo/ddu-source-file_rec'
+
+[[plugins]]
+repo = 'Shougo/ddu-source-file'
+
+[[plugins]]
+repo = 'Shougo/ddu-source-file_point'
+
+[[plugins]]
+repo = 'Shougo/ddu-source-register'
+
+[[plugins]]
+repo = 'Shougo/ddu-filter-matcher_substring'
+
+[[plugins]]
+repo = 'Shougo/ddu-kind-file'
+
+
+[[plugins]]
+repo = 'kuuote/ddu-source-mr'
+
+[[plugins]]
+repo = 'shun/ddu-source-buffer'
+
+[[plugins]]
+repo = 'Shougo/ddu-commands.vim'
+
+[[plugins]]
+repo = '4513ECHO/ddu-source-colorscheme'
+
+[[plugins]]
+repo = 'shun/ddu-source-rg'
+
+[[plugins]]
+repo = 'uga-rosa/ddu-filter-converter_devicon'
+
+# command line position
+[[plugins]]
+repo = 'Shougo/cmdline.vim'
+hooks_file = '~/.config/nvim/lua/option/cmd.lua'
+
+# lsp
+[[plugins]]
+repo = 'neovim/nvim-lspconfig'
+
+[[plugins]]
+repo = 'williamboman/mason.nvim'
+
+[[plugins]]
+repo = 'williamboman/mason-lspconfig.nvim'
+
+[[plugins]]
+repo = 'mhartington/formatter.nvim'
+
+# denops markdown
+[[plugins]]
+repo = 'ArcCosine/denops-markdown2html'
+hook_add = '''
+    nnoremap \m :DenopsMarkdown2Html<CR>
+'''
+
+[[plugins]]
+repo = 'NeoSahadeo/image_preview.nvim'
+hooks_file = '~/.config/nvim/lua/plugins/image_preview.lua'
+
+[[plugins]]
+repo = 'nvim-tree/nvim-web-devicons'
+
+[[plugins]]
+repo = 'nvim-tree/nvim-tree.lua'
+
+# fall.vim
+[[plugins]]
+repo = 'vim-fall/fall.vim'
+
+# lazygit
+[[plugins]]
+repo = 'kdheepak/lazygit.nvim'

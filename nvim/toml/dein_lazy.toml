@@ -1,0 +1,14 @@
+# toml
+[[plugins]]
+on_ft = 'toml'
+repo = 'cespare/vim-toml'
+
+# prettier
+# [[plugins]]
+# repo = 'prettier/vim-prettier'
+# build = 'yarn install'
+# on_ft = ['javascript', 'typescript', 'vue', 'css', 'scss', 'json', 'markdown', 'html', 'liquid']
+# hook_source = '''
+#   autocmd BufWritePre  *.js,*.jsx,*.mjs,*.ts,*.tsx,*.css,*.less,*.scss,*.json,*.graphql,*.md,*.vue,*.svelte,*.yaml,*.html,liquid PrettierAsync
+# '''
+
