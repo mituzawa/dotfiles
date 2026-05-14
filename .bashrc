@@ -98,6 +98,7 @@ export CANTRIP_RUST_VERSION=nightly
 export CARGO_HOME=$HOME/.cargo
 
 export BROWSER=wslview
+export TZ='Asia/Tokyo'
 
 # some more ls aliases
 alias ll='ls -alF'
