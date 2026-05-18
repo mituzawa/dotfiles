@@ -47,12 +47,16 @@ augroup END
 # colorscheme
 
 [[plugins]]
-repo = 'joshdick/onedark.vim'
+#repo = 'joshdick/onedark.vim'
+repo = 'jacoborus/tender.vim'
 on_event = 'VimEnter'
-hooks_file = '~/.config/nvim/lua/option/colorscheme.lua'
+#hooks_file = '~/.config/nvim/lua/option/colorscheme.lua'
+hook_add = '''
+	colorscheme tender
+'''
 
-[[plugins]]
-repo = '4513ECHO/vim-colors-hatsunemiku'
+#[[plugins]]
+#repo = '4513ECHO/vim-colors-hatsunemiku'
 
 
 
@@ -156,9 +160,9 @@ hook_add = '''
     nnoremap \m :DenopsMarkdown2Html<CR>
 '''
 
-[[plugins]]
-repo = 'NeoSahadeo/image_preview.nvim'
-hooks_file = '~/.config/nvim/lua/plugins/image_preview.lua'
+#[[plugins]]
+#repo = 'NeoSahadeo/image_preview.nvim'
+#hooks_file = '~/.config/nvim/lua/plugins/image_preview.lua'
 
 [[plugins]]
 repo = 'nvim-tree/nvim-web-devicons'

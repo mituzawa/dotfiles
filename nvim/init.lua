@@ -4,7 +4,7 @@
 --end
 
 -- option
---require("option/option")
+require("option/option")
 --require("option/cd")
 
 -- dark powerd vim settings.

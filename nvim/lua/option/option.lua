@@ -6,7 +6,8 @@ o.enc = "utf-8"
 o.fenc = "utf-8"
 
 -- view
-o.number = true
+--o.number = true
+o.relativenumber = true
 o.signcolumn = "yes"
 o.laststatus = 3
 o.clipboard:append({ "unnamed,unnamedplus" })
@@ -26,9 +27,14 @@ o.pumblend = 0
 -- ]]
 
 -- tabstop
-o.tabstop = 4
+o.tabstop = 8
+o.softtabstop = 4
 o.shiftwidth = 4
 
 -- search
 o.ignorecase = true
 o.smartcase = true
+
+-- others
+o.list = true
+o.listchars = 'tab:>-'
