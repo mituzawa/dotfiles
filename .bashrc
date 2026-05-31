@@ -98,6 +98,8 @@ export CANTRIP_RUST_VERSION=nightly
 export CARGO_HOME=$HOME/.cargo
 
 export BROWSER=wslview
+
+# risc-v machine
 export TZ='Asia/Tokyo'
 
 # some more ls aliases
@@ -111,6 +113,11 @@ alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo
 
 # my aliases
 #alias nvim=$HOME/AppImage/nvim-linux-x86_64.appimage
+if [ -f /opt/nvim-linux-x86_64/bin/nvim ]; then
+    alias vi='nvim'
+fi
+
+nvm alias default 22
 
 # Alias definitions.
 # You may want to put all your additions into a separate file like
@@ -147,3 +154,7 @@ fi
 if [ -d $HOME/.wasmtime ]; then
 	export WASMTIME_HOME="$HOME/.wasmtime"
 fi
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
