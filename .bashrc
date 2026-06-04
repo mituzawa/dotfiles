@@ -102,10 +102,6 @@ case "$(uname -m)" in
     riscv64)
         # risc-v machine
         export TZ='Asia/Tokyo'
-        export KEYSTONE_PLATFORM=generic
-        export KEYSTONE_BITS=64
-        export BUILDROOT_CONFIGFILE=qemu_riscv${KEYSTONE_BITS}_virt_defconfig
-        export BUILDROOT_TARGET=all
         ;;
 esac
 
