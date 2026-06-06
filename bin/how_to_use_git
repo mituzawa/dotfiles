@@ -1,0 +1,8 @@
+echo git status
+echo git diff file.c
+echo git add file.c
+echo git add .
+echo git commit -m "commit message"
+echo git push
+
+echo git clone git@github.com:username/repository.git
