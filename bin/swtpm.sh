@@ -1,6 +1,4 @@
-if [ ! -d /tmp/emulated_tpm ]; then
-  mkdir /tmp/emulated_tpm
-fi
+mkdir -p /tmp/emulated_tpm
 
 swtpm socket \
   --tpmstate dir=/tmp/emulated_tpm \

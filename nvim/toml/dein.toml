@@ -30,22 +30,49 @@ repo = 'lambdalisue/fern.vim'
 [[plugins]]
 repo = 'lambdalisue/fern-renderer-nerdfont.vim'
 
-
 [[plugins]]
 repo = 'lambdalisue/glyph-palette.vim'
 hook_add = '''
 " For Fern
 let g:fern#default_hidden=1
 let g:fern#renderer = "nerdfont"
-" set color on icon
+" Apply colors to icons
 augroup my-glyph-palette
   autocmd! *
   autocmd FileType fern call glyph_palette#apply()
   autocmd FileType nerdtree,startify call glyph_palette#apply()
 augroup END
-'''
-# colorscheme
 
+" Extended icon mappings
+let g:glyph_palette#palette = {}
+" C / C++
+let g:glyph_palette#palette['nf-custom-c'] = ['*.c', '*.h']
+let g:glyph_palette#palette['nf-custom-cpp'] = ['*.cpp', '*.cc', '*.cxx', '*.hpp', '*.hxx']
+" Rust
+let g:glyph_palette#palette['nf-dev-rust'] = ['*.rs']
+let g:glyph_palette#palette['nf-dev-toml'] = ['Cargo.toml', '*.toml']
+" Java
+let g:glyph_palette#palette['nf-dev-java'] = ['*.java']
+" Kotlin
+let g:glyph_palette#palette['nf-seti-kotlin'] = ['*.kt', '*.kts']
+" Make / CMake
+let g:glyph_palette#palette['nf-seti-makefile'] = ['Makefile', 'makefile', 'GNUmakefile']
+let g:glyph_palette#palette['nf-custom-cmake'] = ['CMakeLists.txt', '*.cmake']
+" Build artifacts
+let g:glyph_palette#palette['nf-fa-cog'] = ['*.o', '*.a', '*.so', '*.out']
+" Git
+let g:glyph_palette#palette['nf-dev-git'] = ['.gitconfig', '.gitignore', '.gitmodules']
+" Shell
+let g:glyph_palette#palette['nf-dev-terminal'] = ['.bashrc', '.zshrc', '.profile', '*.sh']
+" Config / Docs
+let g:glyph_palette#palette['nf-dev-yaml'] = ['*.yaml', '*.yml']
+let g:glyph_palette#palette['nf-dev-json'] = ['*.json']
+let g:glyph_palette#palette['nf-dev-markdown'] = ['*.md', '*.markdown']
+let g:glyph_palette#palette['nf-dev-vim'] = ['*.vim', '.vimrc']
+let g:glyph_palette#palette['nf-custom-lua'] = ['*.lua']
+'''
+
+# colorscheme
 [[plugins]]
 #repo = 'joshdick/onedark.vim'
 repo = 'jacoborus/tender.vim'
@@ -177,3 +204,34 @@ repo = 'vim-fall/fall.vim'
 # lazygit
 [[plugins]]
 repo = 'kdheepak/lazygit.nvim'
+
+[[plugins]]
+repo = 'folke/snacks.nvim'
+
+[[plugins]]
+repo = 'coder/claudecode.nvim'
+depends = ['snacks.nvim']
+hook_add = '''
+lua << EOF
+require("claudecode").setup({
+  terminal = {
+    provider = "snacks", -- Use snacks.nvim for a polished terminal UI
+  },
+  split_side = "right",
+  split_width_percentage = 0.35,
+  track_selection = true,
+  git_repo_cwd = true,
+  diff_opts = {
+    open_in_new_tab = true,
+  },
+})
+
+local opts = { noremap = true, silent = true }
+vim.keymap.set("n", "<leader>ac", "<cmd>ClaudeCode<cr>",          vim.tbl_extend("force", opts, { desc = "Toggle Claude Code" }))
+vim.keymap.set("n", "<leader>af", "<cmd>ClaudeCodeFocus<cr>",     vim.tbl_extend("force", opts, { desc = "Focus Claude Code" }))
+vim.keymap.set("n", "<leader>ar", "<cmd>ClaudeCode --resume<cr>", vim.tbl_extend("force", opts, { desc = "Resume Claude session" }))
+vim.keymap.set("n", "<leader>ab", "<cmd>ClaudeCodeAdd %<cr>",     vim.tbl_extend("force", opts, { desc = "Add buffer to Claude" }))
+vim.keymap.set("v", "<leader>as", "<cmd>ClaudeCodeSend<cr>",      vim.tbl_extend("force", opts, { desc = "Send selection to Claude" }))
+vim.keymap.set("n", "<leader>at", "<cmd>ClaudeCodeTreeAdd<cr>",   vim.tbl_extend("force", opts, { desc = "Add file from tree" }))
+EOF
+'''

@@ -8,3 +8,5 @@
 [alias]
 	st = status -s
 	l = log --oneline
+[url "https://github.com/buildroot/buildroot.git"]
+	insteadOf = git://git.buildroot.net/buildroot

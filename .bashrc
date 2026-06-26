@@ -98,6 +98,15 @@ case "$(uname -m)" in
         export SPARROW_ROOTDIR=$HOME/src/sparrow
         export CANTRIP_RUST_VERSION=nightly
         export CARGO_HOME=$HOME/.cargo
+        # Keystone
+        export KEYSTONE=$HOME/github/keystone
+        export KEYSTONE_BOOTROM=$HOME/github/keystone/bootrom
+        export KEYSTONE_SM=$HOME/github/keystone/sm
+        export KEYSTONE_SDK=$HOME/github/keystone/sdk
+        export KEYSTONE_RUNTIME=$HOME/github/keystone/runtime
+        export KEYSTONE_DRIVER=$HOME/github/keystone/linux-keystone-driver
+        export KEYSTONE_EXAMPLES=$HOME/github/keystone/examples
+        export BUILDROOT_BUILDDIR=$HOME/github/keystone/build-generic64/buildroot.build
         ;;
     riscv64)
         # risc-v machine

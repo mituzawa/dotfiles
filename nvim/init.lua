@@ -12,7 +12,7 @@ require("darkpowerd/dpp")
 --require("darkpowerd/ddu")
 
 -- keymaps
---require("keymap/keymap")
+require("keymap/keymap")
 --require("keymap/yankround")
 
 -- plugins

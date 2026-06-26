@@ -33,6 +33,14 @@ if [ -d $HOME/.wasmtime ]; then
 	PATH="$WASMTIME_HOME/bin:$PATH"
 fi
 
+if [ -d $HOME/images/wasi-sdk-33.0-x86_64-linux/bin ]; then
+	PATH="$HOME/images/wasi-sdk-33.0-x86_64-linux/bin:$PATH"
+fi
+
+if [ -d $HOME/github/wasm-micro-runtime/product-mini/platforms/linux/build ]; then
+	PATH="$HOME/github/wasm-micro-runtime/product-mini/platforms/linux/build:$PATH"
+fi
+
 LIBPATH=$HOME/lib/ssl
 
 # set PATH so it includes user's private bin if it exists
@@ -43,4 +51,8 @@ fi
 # set PATH so it includes user's private bin if it exists
 if [ -d "$HOME/.local/bin" ] ; then
     PATH="$HOME/.local/bin:$PATH"
+fi
+
+if [ -f "$HOME/bin/clean-wsl-path.sh" ]; then
+    . "$HOME/bin/clean-wsl-path.sh"
 fi
