@@ -64,16 +64,16 @@ syntax enable
 set list
 set listchars=tab:▸-
 
-" Use actual tab characters (no expansion to spaces)
+" Whether to use actual tab characters (noexpandtab) or spaces
 set noexpandtab
 
-" Tab width display: 8 spaces
+" When space is used, indentwidth is be controlled by this only
 set tabstop=8
 
-" Use shiftwidth for <Tab> in insert mode
+" softtabstop follows shiftwidth
 set softtabstop=-1
 
-" Indent width follows tabstop
+" indentwidth follows tabstop
 set shiftwidth=0
 
 " Start scrolling 5 lines before the edge of the window

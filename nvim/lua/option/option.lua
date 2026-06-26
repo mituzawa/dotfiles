@@ -12,6 +12,7 @@ o.signcolumn = "yes"
 o.laststatus = 3
 o.clipboard:append({ "unnamed", "unnamedplus" })
 o.mouse = ""
+-- Whether to use actual tab characters (false) or spaces
 o.expandtab = false
 o.syntax = "on"
 
@@ -26,7 +27,7 @@ o.pumblend = 0
 --   highlight NonText ctermbg=none
 -- ]]
 
--- tabstop
+-- tabstop: When space is used, indentwidth is be controlled by this only
 o.tabstop = 8
 o.softtabstop = -1
 o.shiftwidth = 0
