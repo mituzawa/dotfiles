@@ -10,9 +10,9 @@ o.fenc = "utf-8"
 o.relativenumber = true
 o.signcolumn = "yes"
 o.laststatus = 3
-o.clipboard:append({ "unnamed,unnamedplus" })
-o.mouse = "a"
-o.expandtab = true
+o.clipboard:append({ "unnamed", "unnamedplus" })
+o.mouse = ""
+o.expandtab = false
 o.syntax = "on"
 
 -- transparent
@@ -28,8 +28,8 @@ o.pumblend = 0
 
 -- tabstop
 o.tabstop = 8
-o.softtabstop = 4
-o.shiftwidth = 4
+o.softtabstop = -1
+o.shiftwidth = 0
 
 -- search
 o.ignorecase = true
@@ -37,4 +37,4 @@ o.smartcase = true
 
 -- others
 o.list = true
-o.listchars = 'tab:>-'
+o.listchars = 'tab:▸-'

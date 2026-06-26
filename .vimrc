@@ -1,98 +1,150 @@
-" setting
+" ------------------------------------------------------------
+" General Settings
+" ------------------------------------------------------------
+" Clipboard integration with system clipboard
 set clipboard=unnamedplus
-"文字コードをUFT-8に設定
+
+" Character encoding
 set fenc=utf-8
 set encoding=utf-8
 scriptencoding utf-8
-" 改行コードの自動判別
+
+" Line ending format
 set fileformat=unix
-" □や○文字が崩れる問題を解決
+
+" Fix display issues with ambiguous-width characters (□, ○, etc.)
 set ambiwidth=double
-" バックアップファイルを作らない
+
+" Disable backup and swap files
 set nobackup
-" スワップファイルを作らない
 set noswapfile
-" 編集中のファイルが変更されたら自動で読み直す
+
+" Automatically reload file when changed outside of Vim
 set autoread
-" バッファが編集中でもその他のファイルを開けるように
+
+" Allow switching buffers without saving
 set hidden
-" 入力中のコマンドをステータスに表示する
+
+" Show incomplete commands in the status line
 set showcmd
-"
-"set spell
-"ターミナル接続高速化
+
+" Speed up terminal connection
 set ttyfast
 
-" 見た目系
-" 行番号を表示
-"set number
-" 現在の行を強調表示
-"set cursorline
-" 現在の行を強調表示（縦）
-"set cursorcolumn
-" 行末の1文字先までカーソルを移動できるように
+" ------------------------------------------------------------
+" Appearance
+" ------------------------------------------------------------
+" Show relative line numbers
+" set number
+set relativenumber
+
+" Extend cursor to one character past end of line
 set virtualedit=onemore
-" インデントはスマートインデント
+
+" Enable smart indentation
 set smartindent
-" ビープ音を可視化
-"set visualbell
-" 括弧入力時の対応する括弧を表示
+
+" Highlight matching brackets
 set showmatch
-" ステータスラインを常に表示
+
+" Always show the status line
 set laststatus=2
-" コマンドラインの補完
+
+" Enable command-line completion with wildmenu
 set wildmenu
-""set wildmode=list:longest
 set wildmode=full
-" 折り返し時に表示行単位での移動できるようにする
-nnoremap j gj
-nnoremap k gk
-" シンタックスハイライトの有効化
+
+" Enable syntax highlighting
 syntax enable
 
-" Tab系
-" 不可視文字を可視化(タブが「▸-」と表示される)
-set list listchars=tab:\▸\-
-set noet ts=8 sts=-1 sw=0
-"python用
-"setlocal expandtab tabstop=2 shiftwidth=2 softtabstop=2
-" 残り五行からスクロール開始
+" ------------------------------------------------------------
+" Tab / Indentation
+" ------------------------------------------------------------
+" Display invisible characters (tab shown as ▸-)
+set list
+set listchars=tab:▸-
+
+" Use actual tab characters (no expansion to spaces)
+set noexpandtab
+
+" Tab width display: 8 spaces
+set tabstop=8
+
+" Use shiftwidth for <Tab> in insert mode
+set softtabstop=-1
+
+" Indent width follows tabstop
+set shiftwidth=0
+
+" Start scrolling 5 lines before the edge of the window
 set scrolloff=5
 
-" 検索系
-" 検索文字列が小文字の場合は大文字小文字を区別なく検索する
+" ------------------------------------------------------------
+" Search
+" ------------------------------------------------------------
+" Case-insensitive search by default
 set ignorecase
-" 検索文字列に大文字が含まれている場合は区別して検索する
+
+" Override ignorecase when query contains uppercase letters
 set smartcase
-" 検索文字列入力時に順次対象文字列にヒットさせる
+
+" Incremental search (highlight as you type)
 set incsearch
-" 検索時に最後まで行ったら最初に戻る
+
+" Wrap search around end of file
 set wrapscan
-" 検索語をハイライト表示
+
+" Highlight search results
 set hlsearch
-" ESC連打でハイライト解除
+
+" Clear search highlights with double Esc
 nmap <Esc><Esc> :nohlsearch<CR><Esc>
 
-"leaderキーはスペースキー(便利)
-"キーバインドコーナー
+" ------------------------------------------------------------
+" Key Mappings
+" ------------------------------------------------------------
+" Use Space as the leader key
 let mapleader = "\<Space>"
-" inoremap <silent> jj <ESC>
+
+" Move by display line (useful with wrapping)
+nnoremap j gj
+nnoremap k gk
+
+" Exit insert mode with jk
 inoremap <silent> jk <ESC>
 
+" ------------------------------------------------------------
+" Completion
+" ------------------------------------------------------------
+" Show completion menu; do not auto-insert
 set completeopt=menuone,noinsert
-" 補完表示時のEnterで改行をしない
-inoremap <expr><CR>  pumvisible() ? "<C-y>" : "<CR>"
 
+" Confirm completion with Enter without inserting a newline
+inoremap <expr><CR> pumvisible() ? "<C-y>" : "<CR>"
+
+" ------------------------------------------------------------
+" File Type
+" ------------------------------------------------------------
 filetype on
 filetype indent on
 filetype plugin on
 
+" ------------------------------------------------------------
+" Trailing Whitespace
+" ------------------------------------------------------------
 augroup SpaceDelete
   autocmd!
-  ""autocmd BufWritePre * :%s/\s\+$//ge
+  " Remove trailing whitespace on save (currently disabled)
+  " autocmd BufWritePre * :%s/\s\+$//ge
 augroup END
 
+" ------------------------------------------------------------
+" Full-width Space Highlight
+" ------------------------------------------------------------
 highlight ZenkakuSpace cterm=underline ctermfg=lightblue guibg=#666666
 au BufNewFile,BufRead * match ZenkakuSpace /　/
 
+" ------------------------------------------------------------
+" Color Scheme
+" ------------------------------------------------------------
 colorscheme tender
