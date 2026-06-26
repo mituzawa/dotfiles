@@ -1,3 +1,5 @@
+if not vim.g.vscode then
+
 -- vim.load enable.
 --if vim.loader then
 --	vim.loader.enable()
@@ -20,3 +22,5 @@ require("keymap/keymap")
 -- require("plugins/formatter")
 --require("plugins/nvim-tree")
 -- require("plugins/autocmd")
+
+end
