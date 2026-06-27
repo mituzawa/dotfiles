@@ -13,7 +13,7 @@ o.laststatus = 3
 o.clipboard:append({ "unnamed", "unnamedplus" })
 o.mouse = ""
 -- Whether to use actual tab characters (false) or spaces
-o.expandtab = false
+o.expandtab = true
 o.syntax = "on"
 
 -- transparent
@@ -28,7 +28,7 @@ o.pumblend = 0
 -- ]]
 
 -- tabstop: When space is used, indentwidth is be controlled by this only
-o.tabstop = 8
+o.tabstop = 4
 o.softtabstop = -1
 o.shiftwidth = 0
 

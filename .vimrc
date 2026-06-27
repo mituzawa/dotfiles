@@ -65,10 +65,10 @@ set list
 set listchars=tab:▸-
 
 " Whether to use actual tab characters (noexpandtab) or spaces
-set noexpandtab
+set expandtab
 
 " When space is used, indentwidth is be controlled by this only
-set tabstop=8
+set tabstop=4
 
 " softtabstop follows shiftwidth
 set softtabstop=-1
