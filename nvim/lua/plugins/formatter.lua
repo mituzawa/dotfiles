@@ -1,6 +1,12 @@
 require("formatter").setup({
 	logging = false,
 	filetype = {
+        c = {
+            require("formatter.filetypes.c").clangformat,
+        },
+        cpp = {
+            require("formatter.filetypes.cpp").clangformat,
+        },
 		html = {
 			require("formatter.filetypes.html").djlint,
 		},

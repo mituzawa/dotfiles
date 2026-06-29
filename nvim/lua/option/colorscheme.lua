@@ -1,4 +1,11 @@
-require("onedark").setup({
-	style = "darker",
+-- lua_source {{{
+require('kanagawa').setup({
+  theme = "wave",
+  undercurl = true,
+  commentStyle = { italic = true },
+  keywordStyle = { italic = true },
+  statementStyle = { bold = true },
+  transparent = true,
 })
-require("onedark").load()
+vim.cmd("colorscheme kanagawa")
+-- }}}

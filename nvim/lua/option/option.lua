@@ -1,25 +1,22 @@
-local o = vim.opt
-
 -- file format
-o.fileformat = "unix"
-o.enc = "utf-8"
-o.fenc = "utf-8"
+vim.opt.fileformat = "unix"
+vim.opt.fenc = "utf-8"
 
 -- view
---o.number = true
-o.relativenumber = true
-o.signcolumn = "yes"
-o.laststatus = 3
-o.clipboard:append({ "unnamed", "unnamedplus" })
-o.mouse = ""
+vim.opt.number = true
+vim.opt.relativenumber = true
+vim.opt.signcolumn = "yes"
+vim.opt.laststatus = 3
+vim.opt.clipboard:append({ "unnamed", "unnamedplus" })
+vim.opt.mouse = ""
 -- Whether to use actual tab characters (false) or spaces
-o.expandtab = true
-o.syntax = "on"
+vim.opt.expandtab = true
+vim.opt.syntax = "on"
 
 -- transparent
-o.termguicolors = true
-o.winblend = 0
-o.pumblend = 0
+vim.opt.termguicolors = true
+vim.opt.winblend = 0
+vim.opt.pumblend = 0
 -- vim.cmd [[
 --   highlight Normal guibg=none
 --   highlight NonText guibg=none
@@ -28,14 +25,27 @@ o.pumblend = 0
 -- ]]
 
 -- tabstop: When space is used, indentwidth is be controlled by this only
-o.tabstop = 4
-o.softtabstop = -1
-o.shiftwidth = 0
+vim.opt.tabstop = 4
+vim.opt.softtabstop = -1
+vim.opt.shiftwidth = 0
 
 -- search
-o.ignorecase = true
-o.smartcase = true
+vim.opt.ignorecase = true
+vim.opt.smartcase = true
 
 -- others
-o.list = true
-o.listchars = 'tab:▸-'
+vim.opt.list = true
+vim.opt.listchars = 'tab:▸-'
+
+vim.g.clipboard = {
+  name = "WslClipboard",
+  copy = {
+    ["+"] = "clip.exe",
+    ["*"] = "clip.exe",
+  },
+  paste = {
+    ["+"] = 'powershell.exe -noprofile -command [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
+    ["*"] = 'powershell.exe -noprofile -command [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
+  },
+  cache_enabled = 0,
+}

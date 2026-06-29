@@ -18,9 +18,9 @@ require("keymap/keymap")
 --require("keymap/yankround")
 
 -- plugins
---require("plugins/lspconfig")
--- require("plugins/formatter")
---require("plugins/nvim-tree")
+require("plugins/lspconfig")
+require("plugins/formatter")
+require("plugins/nvim-tree")
 -- require("plugins/autocmd")
 
 end

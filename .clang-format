@@ -1,0 +1,16 @@
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+# Brace style closest to K&R: control statements on same line
+BreakBeforeBraces: Linux
+
+# Place pointer asterisk on the variable side
+PointerAlignment: Right
+
+# Align arguments after open bracket when wrapping
+AlignAfterOpenBracket: Align
+
+# Add space before parentheses only for control statements
+SpaceBeforeParens: ControlStatements

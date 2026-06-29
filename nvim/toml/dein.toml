@@ -74,13 +74,8 @@ let g:glyph_palette#palette['nf-custom-lua'] = ['*.lua']
 
 # colorscheme
 [[plugins]]
-#repo = 'joshdick/onedark.vim'
-repo = 'jacoborus/tender.vim'
-on_event = 'VimEnter'
-#hooks_file = '~/.config/nvim/lua/option/colorscheme.lua'
-hook_add = '''
-	colorscheme tender
-'''
+repo = 'rebelot/kanagawa.nvim'
+hooks_file = '~/.config/nvim/lua/option/colorscheme.lua'
 
 #[[plugins]]
 #repo = '4513ECHO/vim-colors-hatsunemiku'
