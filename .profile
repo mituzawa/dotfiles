@@ -53,6 +53,6 @@ if [ -d "$HOME/.local/bin" ] ; then
     PATH="$HOME/.local/bin:$PATH"
 fi
 
-#if [ -f "$HOME/bin/clean-wsl-path.sh" ]; then
-#    . "$HOME/bin/clean-wsl-path.sh"
-#fi
+if [ -f "$HOME/bin/clean-wsl-path.sh" ]; then
+    . "$HOME/bin/clean-wsl-path.sh"
+fi
