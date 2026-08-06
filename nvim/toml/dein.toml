@@ -220,13 +220,6 @@ require("claudecode").setup({
     open_in_new_tab = true,
   },
 })
-
-local opts = { noremap = true, silent = true }
-vim.keymap.set("n", "<leader>ac", "<cmd>ClaudeCode<cr>",          vim.tbl_extend("force", opts, { desc = "Toggle Claude Code" }))
-vim.keymap.set("n", "<leader>af", "<cmd>ClaudeCodeFocus<cr>",     vim.tbl_extend("force", opts, { desc = "Focus Claude Code" }))
-vim.keymap.set("n", "<leader>ar", "<cmd>ClaudeCode --resume<cr>", vim.tbl_extend("force", opts, { desc = "Resume Claude session" }))
-vim.keymap.set("n", "<leader>ab", "<cmd>ClaudeCodeAdd %<cr>",     vim.tbl_extend("force", opts, { desc = "Add buffer to Claude" }))
-vim.keymap.set("v", "<leader>as", "<cmd>ClaudeCodeSend<cr>",      vim.tbl_extend("force", opts, { desc = "Send selection to Claude" }))
-vim.keymap.set("n", "<leader>at", "<cmd>ClaudeCodeTreeAdd<cr>",   vim.tbl_extend("force", opts, { desc = "Add file from tree" }))
+-- Keymaps live in ~/.config/nvim/lua/keymap/keymap.lua
 EOF
 '''

@@ -22,10 +22,11 @@ vim.keymap.set("n", ",uj", function()
 end, { silent = true, desc = "Toggle Fern drawer" })
 
 -- Claude Code keymaps
+-- ,a を prefix にする（,u は ddu 用なので衝突させない）
 local claude_opts = { noremap = true, silent = true }
-vim.keymap.set("n", ",ua", "<cmd>ClaudeCode<cr>", vim.tbl_extend("force", claude_opts, { desc = "Toggle Claude Code" }))
-vim.keymap.set("n", ",uf", "<cmd>ClaudeCodeFocus<cr>", vim.tbl_extend("force", claude_opts, { desc = "Focus Claude Code" }))
-vim.keymap.set("n", ",ur", "<cmd>ClaudeCode --resume<cr>", vim.tbl_extend("force", claude_opts, { desc = "Resume Claude session" }))
-vim.keymap.set("n", ",ub", "<cmd>ClaudeCodeAdd %<cr>", vim.tbl_extend("force", claude_opts, { desc = "Add buffer to Claude" }))
-vim.keymap.set("v", ",us", "<cmd>ClaudeCodeSend<cr>", vim.tbl_extend("force", claude_opts, { desc = "Send selection to Claude" }))
-vim.keymap.set("n", ",ut", "<cmd>ClaudeCodeTreeAdd<cr>", vim.tbl_extend("force", claude_opts, { desc = "Add file from tree" }))
+vim.keymap.set("n", ",ac", "<cmd>ClaudeCode<cr>", vim.tbl_extend("force", claude_opts, { desc = "Toggle Claude Code" }))
+vim.keymap.set("n", ",af", "<cmd>ClaudeCodeFocus<cr>", vim.tbl_extend("force", claude_opts, { desc = "Focus Claude Code" }))
+vim.keymap.set("n", ",ar", "<cmd>ClaudeCode --resume<cr>", vim.tbl_extend("force", claude_opts, { desc = "Resume Claude session" }))
+vim.keymap.set("n", ",ab", "<cmd>ClaudeCodeAdd %<cr>", vim.tbl_extend("force", claude_opts, { desc = "Add buffer to Claude" }))
+vim.keymap.set("v", ",as", "<cmd>ClaudeCodeSend<cr>", vim.tbl_extend("force", claude_opts, { desc = "Send selection to Claude" }))
+vim.keymap.set("n", ",at", "<cmd>ClaudeCodeTreeAdd<cr>", vim.tbl_extend("force", claude_opts, { desc = "Add file from tree" }))
