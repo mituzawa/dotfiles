@@ -1,19 +1,25 @@
 -- Key map
 
 -- ,uをleaderにする
-local ug_map = {}
-ug_map.nop = function() end
-vim.api.nvim_set_keymap("n", ",u", ":lua ug_map.nop()<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", ",u", "<Nop>", { noremap = true, silent = true })
 
 -- nnoremap
 local opts = { noremap = true, silent = true }
 for k, v in pairs({
-	[",uj"] = ":<C-u>Fern . -reveal=% -drawer<CR>",
 	[",r"] = ":lua vim.cmd('source ' .. vim.fn.stdpath('config') .. '/init.lua')<CR>",
-    [",ug"] = ":LazyGit<CR>",
+	[",ug"] = ":LazyGit<CR>",
 }) do
 	vim.api.nvim_set_keymap("n", k, v, opts)
 end
+
+-- Fern
+vim.keymap.set("n", ",uj", function()
+	local cmd = "Fern . -drawer -toggle"
+	if vim.bo.buftype == "" and vim.fn.expand("%") ~= "" then
+		cmd = cmd .. " -reveal=%"
+	end
+	vim.cmd(cmd)
+end, { silent = true, desc = "Toggle Fern drawer" })
 
 -- Claude Code keymaps
 local claude_opts = { noremap = true, silent = true }
