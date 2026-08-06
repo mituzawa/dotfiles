@@ -127,7 +127,7 @@ alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo
 
 # my aliases
 #alias nvim=$HOME/AppImage/nvim-linux-x86_64.appimage
-alias view='nvim -M'
+alias view='nvim -R'
 
 # Alias definitions.
 # You may want to put all your additions into a separate file like
