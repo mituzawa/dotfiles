@@ -128,10 +128,6 @@ hook_add = '''
     nnoremap \m :DenopsMarkdown2Html<CR>
 '''
 
-#[[plugins]]
-#repo = 'NeoSahadeo/image_preview.nvim'
-#hooks_file = '~/.config/nvim/lua/plugins/image_preview.lua'
-
 [[plugins]]
 repo = 'nvim-tree/nvim-web-devicons'
 

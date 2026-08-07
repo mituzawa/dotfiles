@@ -50,10 +50,10 @@ nvim/lua/
   darkpowerd/   dpp.lua (bootstrap), ddu.lua (fuzzy finder config)
   option/       option.lua (editor settings), cmd.lua, colorscheme.lua, cd.lua
   keymap/       keymap.lua (leader mappings), yankround.lua
-  plugins/      lspconfig.lua, formatter.lua, nvim-tree.lua, autocmd.lua, image_preview.lua
+  plugins/      lspconfig.lua, formatter.lua, nvim-tree.lua, autocmd.lua
 ```
 
-`init.lua` requires `option/option`, `darkpowerd/dpp`, `darkpowerd/ddu`, `keymap/keymap`, `plugins/lspconfig`, `plugins/formatter`, `plugins/nvim-tree` and `plugins/autocmd`. Two modules — `option/cd` and `keymap/yankround` — are present but commented out; enable them by uncommenting the relevant `require()` lines. `plugins/image_preview` is not referenced at all, and its plugin is commented out in `dein.toml`. Note `init.lua` wraps everything in `if not vim.g.vscode`, so nothing loads under vscode-neovim.
+`init.lua` requires `option/option`, `darkpowerd/dpp`, `darkpowerd/ddu`, `keymap/keymap`, `plugins/lspconfig`, `plugins/formatter`, `plugins/nvim-tree` and `plugins/autocmd`. Two modules — `option/cd` and `keymap/yankround` — are present but commented out; enable them by uncommenting the relevant `require()` lines. Note `init.lua` wraps everything in `if not vim.g.vscode`, so nothing loads under vscode-neovim.
 
 ### Format-on-save
 
