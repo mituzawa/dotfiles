@@ -113,6 +113,12 @@ ddu accounts for 16 of the 35 plugin entries in `dein.toml` — each source, fil
 
 `:ClaudeCode` takes `nargs = "*"` and appends whatever it is given to the `claude` binary (`terminal.lua:356`), so any CLI flag can be bound this way. Sessions are stored per working directory under `~/.claude/projects/<slugified-cwd>/`; `git_repo_cwd = true` in the `dein.toml` hook makes the terminal spawn at the git root (`terminal.lua:263-266`), so history is shared no matter which subdirectory Neovim was started from. All three of `,ac` / `,af` / `,ar` are toggles — arguments only take effect when the terminal is actually being spawned, so pressing them while it is open just hides the window.
 
+**`claudecode.setup()` silently discards misplaced keys.** `split_side`, `split_width_percentage`, `git_repo_cwd`, `auto_close`, `auto_insert` and `snacks_win_opts` all belong inside `terminal = { ... }`; `track_selection`, `diff_opts`, `terminal_cmd`, `env` and `models` are top-level. `config.lua` validates only the keys it knows about, and `init.lua` forwards nothing but `opts.terminal` to the terminal module, so a key at the wrong depth produces no warning — the default just quietly applies. All three of the split options had been sitting at the top level, which is why the pane used the 0.30 default instead of the 0.35 written in the hook. To check what actually took effect:
+
+```vim
+:lua print(vim.inspect(require("claudecode").state.config.terminal))
+```
+
 ### LSP
 
 `lua/plugins/lspconfig.lua` sets up mason.nvim + mason-lspconfig for automatic LSP server installation, enabling `lua_ls`, `vimls`, `clangd`, `rust_analyzer`, `bashls` and `pyright` through `automatic_enable`.
