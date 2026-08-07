@@ -19,16 +19,15 @@ local on_attach = function(client, bufnr)
 	set("n", "]d", "<cmd>lua vim.lsp.diagnostic.goto_next()<CR>")
 end
 
-
 -- この一連の記述で、mason.nvimでインストールしたLanguage Serverが自動的に個別にセットアップされ、利用可能になります
 require("mason").setup()
 require("mason-lspconfig").setup({
-    automatic_enable = {
-        "lua_ls",
-        "vimls",
-        "clangd",
-        "rust_analyzer",
-        "bashls",
-        "pyright",
-    }
+	automatic_enable = {
+		"lua_ls",
+		"vimls",
+		"clangd",
+		"rust_analyzer",
+		"bashls",
+		"pyright",
+	},
 })

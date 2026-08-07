@@ -75,13 +75,7 @@ vim.api.nvim_create_autocmd("FileType", {
 			i = "openFilterWindow",
 			P = "togglePreview",
 		}) do
-			vim.api.nvim_buf_set_keymap(
-				0,
-				"n",
-				k,
-				"<Cmd>call ddu#ui#do_action('" .. v .. "')<CR>",
-				{ noremap = true, silent = true }
-			)
+			vim.api.nvim_buf_set_keymap(0, "n", k, "<Cmd>call ddu#ui#do_action('" .. v .. "')<CR>", { noremap = true, silent = true })
 		end
 	end,
 })
