@@ -53,7 +53,7 @@ nvim/lua/
   plugins/      lspconfig.lua, formatter.lua, nvim-tree.lua, autocmd.lua, image_preview.lua
 ```
 
-`init.lua` requires `option/option`, `darkpowerd/dpp`, `keymap/keymap`, `plugins/lspconfig`, `plugins/formatter`, `plugins/nvim-tree` and `plugins/autocmd`. The rest — `option/cd`, `darkpowerd/ddu`, `keymap/yankround` — are present but commented out; enable them by uncommenting the relevant `require()` lines. Note `init.lua` wraps everything in `if not vim.g.vscode`, so nothing loads under vscode-neovim.
+`init.lua` requires `option/option`, `darkpowerd/dpp`, `darkpowerd/ddu`, `keymap/keymap`, `plugins/lspconfig`, `plugins/formatter`, `plugins/nvim-tree` and `plugins/autocmd`. Two modules — `option/cd` and `keymap/yankround` — are present but commented out; enable them by uncommenting the relevant `require()` lines. `option/tabstop` and `plugins/image_preview` are not referenced at all (the latter's plugin is commented out in `dein.toml`). Note `init.lua` wraps everything in `if not vim.g.vscode`, so nothing loads under vscode-neovim.
 
 ### Format-on-save
 
@@ -93,7 +93,11 @@ fern.vim (plus nerdfont.vim, fern-renderer-nerdfont.vim and glyph-palette.vim) w
 
 ### Fuzzy finder (ddu.vim)
 
-`lua/darkpowerd/ddu.lua` configures the ddu fuzzy finder using `,u` as a prefix: `,uc` for file\_rec, `,ub` for buffers, `,um` for MRU, etc. It is commented out in `init.lua`, so **those `,u*` mappings are currently inactive** even though the ddu plugins are installed. `keymap.lua` maps `,u` itself to `<Nop>`, so only the `,u` mappings defined there (`,uj`, `,ug`) respond.
+`lua/darkpowerd/ddu.lua` configures the ddu fuzzy finder using `,u` as a prefix: `,uc` file_rec, `,uf` file, `,ub` buffers, `,um` MRU, `,ur` registers, `,up` file_point, `,un` new file, `,ul` colorscheme. It sets a floating ff UI with automatic preview and devicon converters, and binds `<CR>` / `q` / `<Space>` / `i` / `P` inside `ddu-ff` buffers.
+
+`keymap.lua` also maps `,u` itself to `<Nop>`, which coexists with the longer mappings — pressing `,u` alone just waits out `timeoutlen` and does nothing. Note `init.lua` loads `darkpowerd/ddu` before `keymap/keymap`, so `,uj` and `,ug` from the latter sit alongside ddu's mappings rather than replacing them.
+
+ddu accounts for 16 of the 35 plugin entries in `dein.toml` — each source, filter and kind is its own repository. `fall.vim` is also installed but has no config; it and `snacks.nvim`'s picker (already present as a claudecode.nvim dependency) are the alternatives if that count ever becomes a problem.
 
 ### Keymaps (`lua/keymap/keymap.lua`)
 

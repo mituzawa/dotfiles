@@ -11,7 +11,7 @@ require("option/option")
 
 -- dark powerd vim settings.
 require("darkpowerd/dpp")
---require("darkpowerd/ddu")
+require("darkpowerd/ddu")
 
 -- keymaps
 require("keymap/keymap")
