@@ -87,34 +87,24 @@ fi
 # colored GCC warnings and errors
 #export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 
+export BROWSER=wslview
+
+# Keystone
+export KEYSTONE=$HOME/github/keystone
+export KEYSTONE_BOOTROM=$HOME/github/keystone/bootrom
+export KEYSTONE_SM=$HOME/github/keystone/sm
+export KEYSTONE_SDK=$HOME/github/keystone/sdk
+export KEYSTONE_RUNTIME=$HOME/github/keystone/runtime
+export KEYSTONE_DRIVER=$HOME/github/keystone/linux-keystone-driver
+export KEYSTONE_EXAMPLES=$HOME/github/keystone/examples
+export BUILDROOT_BUILDDIR=$HOME/github/keystone/build-generic64/buildroot.build
+
 case "$(uname -m)" in
-    x86_64)
-        # optee
-        export PATH_OPTEE=$HOME/src/optee
-        export PATH_darknetz=$HOME/src/darknetz
-        export PATH_tz_datasets=$HOME/src/tz_datasets
-        # sparrow
-        export PLATFORM=rpi3
-        export SPARROW_ROOTDIR=$HOME/src/sparrow
-        export CANTRIP_RUST_VERSION=nightly
-        export CARGO_HOME=$HOME/.cargo
-        # Keystone
-        export KEYSTONE=$HOME/github/keystone
-        export KEYSTONE_BOOTROM=$HOME/github/keystone/bootrom
-        export KEYSTONE_SM=$HOME/github/keystone/sm
-        export KEYSTONE_SDK=$HOME/github/keystone/sdk
-        export KEYSTONE_RUNTIME=$HOME/github/keystone/runtime
-        export KEYSTONE_DRIVER=$HOME/github/keystone/linux-keystone-driver
-        export KEYSTONE_EXAMPLES=$HOME/github/keystone/examples
-        export BUILDROOT_BUILDDIR=$HOME/github/keystone/build-generic64/buildroot.build
-        ;;
     riscv64)
         # risc-v machine
         export TZ='Asia/Tokyo'
         ;;
 esac
-
-export BROWSER=wslview
 
 # some more ls aliases
 alias ll='ls -alF'
