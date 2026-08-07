@@ -21,14 +21,6 @@ if [ -d "/opt/nvim-linux-x86_64/bin" ]; then
     PATH="/opt/nvim-linux-x86_64/bin:$PATH"
 fi
 
-if [ -d "$HOME/bin/gcc-arm-11.2-2022.02-x86_64-aarch64-none-linux-gnu/bin" ]; then
-    PATH="$HOME/bin/gcc-arm-11.2-2022.02-x86_64-aarch64-none-linux-gnu/bin:$PATH"
-fi
-
-if [ -d "$HOME/bin/arm-gnu-toolchain-12.3.rel1-x86_64-aarch64-none-linux-gnu/bin" ]; then
-    PATH="$HOME/bin/arm-gnu-toolchain-12.3.rel1-x86_64-aarch64-none-linux-gnu/bin:$PATH"
-fi
-
 if [ -d "$HOME/.wasmtime" ]; then
     export WASMTIME_HOME="$HOME/.wasmtime"
     PATH="$WASMTIME_HOME/bin:$PATH"

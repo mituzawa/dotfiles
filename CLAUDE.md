@@ -152,17 +152,30 @@ Scripts in `bin/` are standalone shell utilities (QEMU/TPM setup, buildroot help
 | 4 | `~/github/wasm-micro-runtime/product-mini/platforms/linux/build` | `iwasm` |
 | 5 | `~/images/wasi-sdk-33.0-x86_64-linux/bin` | WASI SDK |
 | 6 | `$WASMTIME_HOME/bin` | wasmtime |
-| 7 | `~/bin/arm-gnu-toolchain-12.3.rel1-x86_64-aarch64-none-linux-gnu/bin` | aarch64 cross toolchain |
-| 8 | `~/bin/gcc-arm-11.2-2022.02-x86_64-aarch64-none-linux-gnu/bin` | older aarch64 cross toolchain |
-| 9 | `/opt/nvim-linux-x86_64/bin` | Neovim |
+| 7 | `/opt/nvim-linux-x86_64/bin` | Neovim |
 
 Adding a block at the bottom therefore gives it the *highest* precedence, not the lowest.
 
 `bin/clean-wsl-path.sh` is sourced last and must stay last. It splits `PATH` on `:` and rebuilds it with empty entries and entries containing spaces dropped, which is what keeps WSL's injected `C:\Program Files\...` paths out. Anything appended after it escapes the filter.
 
+The space filter is not cosmetic: Buildroot's `support/dependencies/dependencies.sh` aborts outright when `PATH` contains a space, so the `~/github/keystone` build (`build-generic64/buildroot.build`) cannot run without it.
+
 Each block must also test the same thing it uses. The wasmtime entry used to test `-d $HOME/.wasmtime` while expanding `$WASMTIME_HOME`, which `.bashrc` exported — and `.bashrc` returns early in a non-interactive shell, well before that export. So `bash -lc`, `ssh host cmd` and cron got an empty expansion and silently prepended `/bin` (`/usr/bin` under merged-usr) into slot 6, ahead of `/opt/nvim-linux-x86_64/bin` and `~/.cargo/bin`. Nothing was actually shadowed, but the export now lives in the same block as the `PATH` line that consumes it. `WASMTIME_HOME` is consequently unset in a non-login interactive shell, which is correct: that shell does not get the `PATH` entry either.
 
 Note that mason's `~/.local/share/nvim/mason/bin` is not here — Neovim prepends that itself, which is why the formatter binaries resolve inside nvim but not in a plain shell.
+
+### Launching VS Code (`bin/code`)
+
+The space filter's one casualty is VS Code, whose launcher lives in `/mnt/c/Users/<user>/AppData/Local/Programs/Microsoft VS Code/bin`. `bin/code` exists to get it back without weakening the filter: `~/bin` has no spaces, so it survives, and the shim calls the real launcher by absolute path.
+
+There are two launchers and they are not interchangeable:
+
+- `~/.vscode-server/bin/<commit>/bin/remote-cli/code` hands its arguments to an already attached window over `$VSCODE_IPC_HOOK_CLI`, and errors out when that variable is unset.
+- The Windows-side wrapper starts a window (or reuses one) from scratch. It finds its own install with `realpath "$0"` and reaches Windows through `/usr/bin/wslpath`, a Linux binary — so nothing has to be on `PATH` for it to work.
+
+The shim branches on `$VSCODE_IPC_HOOK_CLI` rather than leaving the choice to `PATH` order, because VS Code puts the remote-cli directory on `PATH` for its integrated terminal but `.profile` prepends `~/bin` afterwards, so the shim wins there too. Both the user install (`AppData/Local/Programs`) and the system install (`/mnt/c/Program Files`) are probed, so re-installing VS Code the other way does not break it.
+
+Two alternatives were rejected. Stripping `PATH` only around the Keystone build inverts the safe default and assumes Buildroot is the only thing that minds. `appendWindowsPath=false` in `/etc/wsl.conf` stops the injection at the source, but the VS Code path contains a space either way, so it would still need re-adding by hand — and `explorer.exe`, `clip.exe` and friends would then need it too.
 
 ### Interactive shell (`.bashrc`)
 

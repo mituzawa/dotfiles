@@ -1,0 +1,42 @@
+#!/bin/sh
+# Launch VS Code from a WSL shell whose PATH has had space-containing entries
+# stripped.
+#
+# bin/clean-wsl-path.sh drops every PATH entry containing a space, because
+# Buildroot -- and therefore the ~/github/keystone build -- aborts in
+# support/dependencies/dependencies.sh when it finds one. VS Code's launcher
+# lives in ".../Programs/Microsoft VS Code/bin", so that filter takes it out
+# along with the rest. This shim sits in ~/bin, which has no spaces and survives
+# the filter, and calls the real launcher by absolute path.
+#
+# Two launchers exist and they are not interchangeable:
+#   - ~/.vscode-server/bin/<commit>/bin/remote-cli/code hands the arguments to
+#     an already attached window over $VSCODE_IPC_HOOK_CLI, and errors out when
+#     that variable is unset.
+#   - the Windows-side wrapper starts a window (or reuses one) from scratch. It
+#     locates its own install with realpath "$0", so nothing has to be on PATH.
+#
+# VS Code puts the remote-cli directory on PATH in its integrated terminal, but
+# .profile prepends ~/bin afterwards, so this file wins there too -- hence the
+# $VSCODE_IPC_HOOK_CLI branch rather than leaving that case to PATH order.
+
+set -e
+
+if [ -n "$VSCODE_IPC_HOOK_CLI" ]; then
+    for _cli in "$HOME"/.vscode-server/bin/*/bin/remote-cli/code; do
+        if [ -x "$_cli" ]; then
+            exec "$_cli" "$@"
+        fi
+    done
+fi
+
+for _win in \
+    /mnt/c/Users/*/AppData/Local/Programs/"Microsoft VS Code"/bin/code \
+    "/mnt/c/Program Files/Microsoft VS Code/bin/code"; do
+    if [ -x "$_win" ]; then
+        exec "$_win" "$@"
+    fi
+done
+
+echo "code: no VS Code launcher found under /mnt/c" >&2
+exit 1
