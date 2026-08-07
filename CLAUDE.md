@@ -117,7 +117,11 @@ ddu accounts for 16 of the 35 plugin entries in `dein.toml` — each source, fil
 
 `lua/plugins/lspconfig.lua` sets up mason.nvim + mason-lspconfig for automatic LSP server installation, enabling `lua_ls`, `vimls`, `clangd`, `rust_analyzer`, `bashls` and `pyright` through `automatic_enable`.
 
-The `on_attach` function at the top of that file (defining `gd`, `K`, `gy`, `rn`, `ma`, `gr`, `[d`, `]d`, …) is **never passed to anything** — with `automatic_enable` those keymaps are not applied, and Neovim's built-in LSP defaults (`grn`, `gra`, `grr`, `K`) are what actually take effect. Wire it up via `vim.lsp.config('*', { on_attach = on_attach })` if those bindings are wanted.
+**No LSP keymaps are defined here.** Neovim 0.11+ ships its own and they are what actually take effect: `grn` rename, `gra` code action, `grr` references, `gri` implementation, `grt` type definition, `grx` codelens, `gO` document symbol, `[d` / `]d` diagnostic jumps, `K` hover (buffer-local on attach), and goto-definition through `tagfunc` on `<C-]>`.
+
+An `on_attach` function defining `gd` / `K` / `<C-m>` / `gy` / `rn` / `ma` / `gr` / `<space>e` / `[d` / `]d` used to sit at the top of the file, but nothing ever passed it anywhere — `automatic_enable` has no hook for it — so it was dead code. It was removed rather than wired up because wiring it would have meant rewriting it: three of its ten mappings called `vim.lsp.diagnostic.show_line_diagnostics` / `goto_prev` / `goto_next`, which no longer exist (that functionality moved to `vim.diagnostic.jump`); `[d` and `]d` would have replaced working built-ins with errors; and none of the `vim.keymap.set` calls passed `{ buffer = bufnr }`, so they would have leaked into every buffer including ones with no LSP attached.
+
+If per-server behaviour is ever needed, `vim.lsp.config('*', { on_attach = ... })` is the hook to use.
 
 `nvim/.luarc.json` configures lua_ls (LuaJIT runtime, `vim` global, `$VIMRUNTIME/lua` library). It only applies when `~/.config/nvim` is the workspace root — editing these files from the dotfiles repo root produces spurious `Undefined global vim` warnings.
 
