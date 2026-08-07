@@ -157,11 +157,13 @@ lua << EOF
 require("claudecode").setup({
   terminal = {
     provider = "snacks", -- Use snacks.nvim for a polished terminal UI
+    -- split_side / split_width_percentage / git_repo_cwd はいずれも terminal 配下。
+    -- トップレベルに置くと検証もされず黙って捨てられ、既定値が使われる
+    split_side = "right",
+    split_width_percentage = 0.35,
+    git_repo_cwd = true,
   },
-  split_side = "right",
-  split_width_percentage = 0.35,
   track_selection = true,
-  git_repo_cwd = true,
   diff_opts = {
     open_in_new_tab = true,
   },
