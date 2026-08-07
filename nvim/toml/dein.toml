@@ -20,66 +20,12 @@ repo = 'mattn/emmet-vim'
 repo = 'LeafCage/yankround.vim'
 
 
-# Fern Filer
-[[plugins]]
-repo = 'lambdalisue/nerdfont.vim'
-
-[[plugins]]
-repo = 'lambdalisue/fern.vim'
-
-[[plugins]]
-repo = 'lambdalisue/fern-renderer-nerdfont.vim'
-
-[[plugins]]
-repo = 'lambdalisue/glyph-palette.vim'
-hook_add = '''
-" For Fern
-let g:fern#default_hidden=1
-let g:fern#renderer = "nerdfont"
-" Apply colors to icons
-augroup my-glyph-palette
-  autocmd! *
-  autocmd FileType fern call glyph_palette#apply()
-  autocmd FileType nerdtree,startify call glyph_palette#apply()
-augroup END
-
-" Extended icon mappings
-let g:glyph_palette#palette = {}
-" C / C++
-let g:glyph_palette#palette['nf-custom-c'] = ['*.c', '*.h']
-let g:glyph_palette#palette['nf-custom-cpp'] = ['*.cpp', '*.cc', '*.cxx', '*.hpp', '*.hxx']
-" Rust
-let g:glyph_palette#palette['nf-dev-rust'] = ['*.rs']
-let g:glyph_palette#palette['nf-dev-toml'] = ['Cargo.toml', '*.toml']
-" Java
-let g:glyph_palette#palette['nf-dev-java'] = ['*.java']
-" Kotlin
-let g:glyph_palette#palette['nf-seti-kotlin'] = ['*.kt', '*.kts']
-" Make / CMake
-let g:glyph_palette#palette['nf-seti-makefile'] = ['Makefile', 'makefile', 'GNUmakefile']
-let g:glyph_palette#palette['nf-custom-cmake'] = ['CMakeLists.txt', '*.cmake']
-" Build artifacts
-let g:glyph_palette#palette['nf-fa-cog'] = ['*.o', '*.a', '*.so', '*.out']
-" Git
-let g:glyph_palette#palette['nf-dev-git'] = ['.gitconfig', '.gitignore', '.gitmodules']
-" Shell
-let g:glyph_palette#palette['nf-dev-terminal'] = ['.bashrc', '.zshrc', '.profile', '*.sh']
-" Config / Docs
-let g:glyph_palette#palette['nf-dev-yaml'] = ['*.yaml', '*.yml']
-let g:glyph_palette#palette['nf-dev-json'] = ['*.json']
-let g:glyph_palette#palette['nf-dev-markdown'] = ['*.md', '*.markdown']
-let g:glyph_palette#palette['nf-dev-vim'] = ['*.vim', '.vimrc']
-let g:glyph_palette#palette['nf-custom-lua'] = ['*.lua']
-'''
+# Filer: nvim-tree (icons come from nvim-web-devicons)
 
 # colorscheme
 [[plugins]]
 repo = 'rebelot/kanagawa.nvim'
 hooks_file = '~/.config/nvim/lua/option/colorscheme.lua'
-
-#[[plugins]]
-#repo = '4513ECHO/vim-colors-hatsunemiku'
-
 
 
 # lightline
