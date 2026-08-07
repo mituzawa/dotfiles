@@ -53,7 +53,7 @@ nvim/lua/
   plugins/      lspconfig.lua, formatter.lua, nvim-tree.lua, autocmd.lua
 ```
 
-`init.lua` requires `option/option`, `darkpowerd/dpp`, `darkpowerd/ddu`, `keymap/keymap`, `plugins/lspconfig`, `plugins/formatter`, `plugins/nvim-tree` and `plugins/autocmd`. Two modules — `option/cd` and `keymap/yankround` — are present but commented out; enable them by uncommenting the relevant `require()` lines. Note `init.lua` wraps everything in `if not vim.g.vscode`, so nothing loads under vscode-neovim.
+`init.lua` requires every module under `lua/`: `option/option`, `option/cd`, `darkpowerd/dpp`, `darkpowerd/ddu`, `keymap/keymap`, `keymap/yankround`, `plugins/lspconfig`, `plugins/formatter`, `plugins/nvim-tree` and `plugins/autocmd`. Nothing is commented out any more. Note `init.lua` wraps everything in `if not vim.g.vscode`, so nothing loads under vscode-neovim.
 
 ### Format-on-save
 
@@ -110,6 +110,11 @@ ddu accounts for 16 of the 35 plugin entries in `dein.toml` — each source, fil
 | `,ar` / `,ak` | Resume Claude session (`--resume`, picker) / continue the latest one (`--continue`) |
 | `,ab` / `,at` | Add current buffer / file under tree cursor to Claude |
 | `,as` (visual) | Send selection to Claude |
+| `<Space>cd` | `:CD` — `lcd` to the current file's directory (`lua/option/cd.lua`) |
+| `p` / `P` | Paste through yankround |
+| `<C-p>` / `<C-n>` | Cycle backwards / forwards through the yank history (`lua/keymap/yankround.lua`) |
+
+`<C-p>` and `<C-n>` have no default *mapping*, but they are default *motions* (up/down a line, like `k`/`j`); yankround takes them over in normal mode. Insert-mode completion is untouched, since `yankround.lua` only maps normal mode. Note that `plugin/yankround.vim` records the yank history whether or not these mappings exist, so the history already had entries before they were enabled.
 
 `:ClaudeCode` takes `nargs = "*"` and appends whatever it is given to the `claude` binary (`terminal.lua:356`), so any CLI flag can be bound this way. Sessions are stored per working directory under `~/.claude/projects/<slugified-cwd>/`; `git_repo_cwd = true` in the `dein.toml` hook makes the terminal spawn at the git root (`terminal.lua:263-266`), so history is shared no matter which subdirectory Neovim was started from. All three of `,ac` / `,af` / `,ar` are toggles — arguments only take effect when the terminal is actually being spawned, so pressing them while it is open just hides the window.
 

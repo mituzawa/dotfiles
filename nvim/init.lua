@@ -7,7 +7,7 @@ if not vim.g.vscode then
 
 -- option
 require("option/option")
---require("option/cd")
+require("option/cd")
 
 -- dark powerd vim settings.
 require("darkpowerd/dpp")
@@ -15,7 +15,7 @@ require("darkpowerd/ddu")
 
 -- keymaps
 require("keymap/keymap")
---require("keymap/yankround")
+require("keymap/yankround")
 
 -- plugins
 require("plugins/lspconfig")
