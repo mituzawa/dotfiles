@@ -41,8 +41,6 @@ if [ -d $HOME/github/wasm-micro-runtime/product-mini/platforms/linux/build ]; th
     PATH="$HOME/github/wasm-micro-runtime/product-mini/platforms/linux/build:$PATH"
 fi
 
-LIBPATH=$HOME/lib/ssl
-
 # set PATH so it includes user's private bin if it exists
 if [ -d "$HOME/bin" ]; then
     PATH="$HOME/bin:$PATH"
