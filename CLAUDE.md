@@ -139,3 +139,39 @@ If per-server behaviour is ever needed, `vim.lsp.config('*', { on_attach = ... }
 ## Shell / bin scripts
 
 Scripts in `bin/` are standalone shell utilities (QEMU/TPM setup, buildroot helpers, SSH shortcuts, etc.). No build step required.
+
+`.profile` is the login shell entry point: it sources `.bashrc`, then prepends every toolchain directory to `PATH` (nvim, ARM toolchains, wasmtime, WASI SDK, wasm-micro-runtime, `~/bin`, `~/.local/bin`, `~/go/bin`), each guarded by a `-d` test. Because each block prepends, the effective priority runs bottom-to-top, so `~/go/bin` wins. `bin/clean-wsl-path.sh` is sourced last and must stay last: it rebuilds `PATH` with empty entries and entries containing spaces dropped, which is what keeps WSL's injected `C:\Program Files\...` paths out. `.bashrc` is the Debian skeleton plus `BROWSER=wslview`, the `KEYSTONE*` exports, `view='nvim -R'`, and conditional sourcing of `~/.cargo/env`, `~/.deno/env` and bash-completion.
+
+### ssh-agent and the git remote
+
+`origin` is `git@github.com:mituzawa/dotfiles.git`, and `~/.ssh/config` points github.com at `~/.ssh/id_ed25519`, **which has a passphrase** (`id_ed25519_nopass` exists but is scoped to two LAN hosts). Claude Code's shell has no TTY, so it cannot answer `Enter passphrase for key ...:` — a push would hang or fail rather than prompt.
+
+`.bashrc` works around this by pinning the agent socket to a fixed path so one agent serves every shell:
+
+```sh
+export SSH_AUTH_SOCK="$HOME/.ssh/agent.sock"
+ssh-add -l >/dev/null 2>&1
+if [ $? -eq 2 ]; then
+    rm -f "$SSH_AUTH_SOCK"
+    ssh-agent -a "$SSH_AUTH_SOCK" >/dev/null 2>&1
+fi
+```
+
+The passphrase is then typed once per WSL boot, in an interactive terminal:
+
+```sh
+ssh-add ~/.ssh/id_ed25519
+```
+
+Two things about that snippet are load-bearing:
+
+- The spawn is gated on `ssh-add -l` exiting **2**, not on it merely being non-zero. Exit 2 means no agent answered; exit **1** means an agent is running but holds no keys yet. Writing `if ! ssh-add -l` would therefore discard a live agent every time a new shell opened before the first `ssh-add`.
+- The default socket path (`/tmp/ssh-XXXXXX/agent.<pid>`) changes on every agent restart, which is why it is pinned. Without that, the socket has to be hunted down with `ls /tmp/ssh-*/agent.*` before every push.
+
+Claude Code takes its environment from the profile once, at session start, so a session older than the `.bashrc` change will not have `SSH_AUTH_SOCK` set. Prefixing the command works without restarting:
+
+```sh
+SSH_AUTH_SOCK=~/.ssh/agent.sock git push
+```
+
+Verify auth without pushing anything with `ssh -T git@github.com`, which answers `Hi mituzawa! You've successfully authenticated, but GitHub does not provide shell access.`
