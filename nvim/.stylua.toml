@@ -1,0 +1,5 @@
+# column_width はデフォルトの 120 だと keymap.lua の vim.keymap.set(...) が
+# 5 行に分解されるため、既存の 1 行スタイルを保てる 160 にしている。
+column_width = 160
+indent_type = "Tabs"
+indent_width = 4

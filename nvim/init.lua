@@ -21,6 +21,6 @@ require("keymap/keymap")
 require("plugins/lspconfig")
 require("plugins/formatter")
 require("plugins/nvim-tree")
--- require("plugins/autocmd")
+require("plugins/autocmd")
 
 end

@@ -53,9 +53,37 @@ nvim/lua/
   plugins/      lspconfig.lua, formatter.lua, nvim-tree.lua, autocmd.lua, image_preview.lua
 ```
 
-`init.lua` requires only `option/option`, `darkpowerd/dpp`, `keymap/keymap`, `plugins/lspconfig`, `plugins/formatter` and `plugins/nvim-tree`. The rest — `option/cd`, `darkpowerd/ddu`, `keymap/yankround`, `plugins/autocmd` — are present but commented out; enable them by uncommenting the relevant `require()` lines. Note `init.lua` wraps everything in `if not vim.g.vscode`, so nothing loads under vscode-neovim.
+`init.lua` requires `option/option`, `darkpowerd/dpp`, `keymap/keymap`, `plugins/lspconfig`, `plugins/formatter`, `plugins/nvim-tree` and `plugins/autocmd`. The rest — `option/cd`, `darkpowerd/ddu`, `keymap/yankround` — are present but commented out; enable them by uncommenting the relevant `require()` lines. Note `init.lua` wraps everything in `if not vim.g.vscode`, so nothing loads under vscode-neovim.
 
-Because `plugins/autocmd` is disabled, **format-on-save is not active** — formatter.nvim is configured, but `:Format` / `:FormatWrite` must be run manually.
+### Format-on-save
+
+`lua/plugins/autocmd.lua` registers a single `BufWritePost` → `:FormatWrite` autocmd inside the `format_on_save` augroup (`clear = true`, so `,r` re-sourcing `init.lua` cannot register duplicates). Its `pattern` is `"*"` on purpose: `lua/plugins/formatter.lua` is the single source of truth for which filetypes get formatted, and formatter.nvim returns early with "No formatter defined" for anything else.
+
+To suppress formatting for one buffer — useful in other people's repos, where these formatters will happily rewrite a whole file with their own defaults:
+
+```vim
+:let b:formatter_skip_buf = v:true
+```
+
+The external binaries come from mason. Re-create them on a fresh machine with:
+
+```
+:MasonInstall prettierd biome djlint mdformat yamlfix shfmt
+```
+
+`clang-format` and `stylua` are pulled in as LSP/tooling dependencies already; `jq` comes from the system. mason prepends `~/.local/share/nvim/mason/bin` to `PATH`, so `vim.fn.jobstart` resolves all of them without extra configuration.
+
+Shell scripts (`setup.sh`, `.bashrc`, `.profile`, everything under `bin/`) all resolve to `filetype=sh`, so the single `sh` entry covers them; there is no `bash` filetype in play and `formatter.filetypes.bash` does not exist. shfmt runs with `-ci` because these scripts indent their `case` patterns (the Debian skeleton style) and shfmt flattens them to the `case` column without it. The tree was formatted once with `shfmt -w -ci -i 4`, so saving any of them should now produce no diff.
+
+Three traps worth remembering when editing `formatter.lua`:
+
+- `require("formatter.filetypes.<ft>").<tool>` returns `nil` when that module does not export the tool, and a table holding only `nil` counts as empty — the result is a silent "No formatter defined". `formatter.filetypes.html` has no `djlint` (only prettier variants and `tidy`), so html pulls it from `formatter.defaults` instead.
+- A formatter invoked with `stdin = true` must actually be told to read stdin. `mdformat` without a trailing `-` prints a warning to stderr and exits 0, which formatter.nvim reads as success and quietly does nothing.
+- `formatter.filetypes.sh.shfmt` passes `vim.opt.shiftwidth:get()` straight to `shfmt -i`. `option.lua` sets `shiftwidth = 0` (follow `tabstop`), so the builtin would emit `-i 0`, meaning tab indentation, in a config where `expandtab` is on. The `sh` entry therefore calls `vim.fn.shiftwidth()`, which resolves 0 to the effective width (4).
+
+`logging = true` with `log_level = vim.log.levels.ERROR` keeps normal saves silent while still surfacing formatter failures; setting `logging = false` suppresses errors too (`log.lua:57-66`).
+
+`nvim/.stylua.toml` pins `column_width = 160` so the long single-line `vim.keymap.set(...)` calls in `keymap.lua` survive stylua's default 120-column wrapping.
 
 ### Filer (nvim-tree)
 
