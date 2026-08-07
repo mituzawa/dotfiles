@@ -18,9 +18,9 @@ The plugin stack is built on two layers:
 ### Bootstrap flow
 
 1. `nvim/init.lua` requires `option/option` (editor options) then `darkpowerd/dpp`.
-2. `lua/darkpowerd/dpp.lua` bootstraps: auto-clones `dpp.vim` and `denops.vim` into `~/.cache/nvim/dpp/` if absent, adds them to runtimepath, then loads the cached plugin state from `~/.cache/nvim/dpp/`.
-3. On first run (or after `:DppMakeState`), `config.ts` is invoked via denops. It reads `toml/dein.toml` (eager plugins) and `toml/dein_lazy.toml` (lazy-loaded by filetype), plus any plugins found under `~/work/` (local development).
-4. The generated state is persisted to disk; subsequent startups load it directly without re-running TypeScript.
+1. `lua/darkpowerd/dpp.lua` bootstraps: auto-clones `dpp.vim` and `denops.vim` into `~/.cache/nvim/dpp/` if absent, adds them to runtimepath, then loads the cached plugin state from `~/.cache/nvim/dpp/`.
+1. On first run (or after `:DppMakeState`), `config.ts` is invoked via denops. It reads `toml/dein.toml` (eager plugins) and `toml/dein_lazy.toml` (lazy-loaded by filetype), plus any plugins found under `~/work/` (local development).
+1. The generated state is persisted to disk; subsequent startups load it directly without re-running TypeScript.
 
 ### Key plugin management commands
 
