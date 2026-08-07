@@ -53,6 +53,11 @@ if [ -d "$HOME/.local/bin" ]; then
     PATH="$HOME/.local/bin:$PATH"
 fi
 
+# set PATH so it includes binaries installed by "go install"
+if [ -d "$HOME/go/bin" ]; then
+    PATH="$HOME/go/bin:$PATH"
+fi
+
 if [ -f "$HOME/bin/clean-wsl-path.sh" ]; then
     . "$HOME/bin/clean-wsl-path.sh"
 fi

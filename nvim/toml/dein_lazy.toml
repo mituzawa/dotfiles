@@ -3,6 +3,13 @@
 on_ft = 'toml'
 repo = 'cespare/vim-toml'
 
+# lazygit
+# eager ロードだと plugin/lazygit.vim だけで起動時間の約4割を占めていたため on_cmd 化した。
+# ,ug は :LazyGit を呼ぶので、コマンド実行時に初めて読み込まれる。
+[[plugins]]
+repo = 'kdheepak/lazygit.nvim'
+on_cmd = ['LazyGit', 'LazyGitCurrentFile', 'LazyGitFilter', 'LazyGitFilterCurrentFile', 'LazyGitLog', 'LazyGitConfig']
+
 # prettier
 # [[plugins]]
 # repo = 'prettier/vim-prettier'

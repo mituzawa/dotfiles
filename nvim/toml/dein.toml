@@ -138,9 +138,7 @@ repo = 'nvim-tree/nvim-tree.lua'
 [[plugins]]
 repo = 'vim-fall/fall.vim'
 
-# lazygit
-[[plugins]]
-repo = 'kdheepak/lazygit.nvim'
+# lazygit は dein_lazy.toml へ（on_cmd で遅延ロード）
 
 [[plugins]]
 repo = 'folke/snacks.nvim'
