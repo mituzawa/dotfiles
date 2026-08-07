@@ -12,44 +12,44 @@
 if [ -n "$BASH_VERSION" ]; then
     # include .bashrc if it exists
     if [ -f "$HOME/.bashrc" ]; then
-	. "$HOME/.bashrc"
+        . "$HOME/.bashrc"
     fi
 fi
 
 # added begin
-if [ -d "/opt/nvim-linux-x86_64/bin" ] ; then
+if [ -d "/opt/nvim-linux-x86_64/bin" ]; then
     PATH="/opt/nvim-linux-x86_64/bin:$PATH"
 fi
 
-if [ -d "$HOME/bin/gcc-arm-11.2-2022.02-x86_64-aarch64-none-linux-gnu/bin" ] ; then
+if [ -d "$HOME/bin/gcc-arm-11.2-2022.02-x86_64-aarch64-none-linux-gnu/bin" ]; then
     PATH="$HOME/bin/gcc-arm-11.2-2022.02-x86_64-aarch64-none-linux-gnu/bin:$PATH"
 fi
 
-if [ -d "$HOME/bin/arm-gnu-toolchain-12.3.rel1-x86_64-aarch64-none-linux-gnu/bin" ] ; then
+if [ -d "$HOME/bin/arm-gnu-toolchain-12.3.rel1-x86_64-aarch64-none-linux-gnu/bin" ]; then
     PATH="$HOME/bin/arm-gnu-toolchain-12.3.rel1-x86_64-aarch64-none-linux-gnu/bin:$PATH"
 fi
 
 if [ -d $HOME/.wasmtime ]; then
-	PATH="$WASMTIME_HOME/bin:$PATH"
+    PATH="$WASMTIME_HOME/bin:$PATH"
 fi
 
 if [ -d $HOME/images/wasi-sdk-33.0-x86_64-linux/bin ]; then
-	PATH="$HOME/images/wasi-sdk-33.0-x86_64-linux/bin:$PATH"
+    PATH="$HOME/images/wasi-sdk-33.0-x86_64-linux/bin:$PATH"
 fi
 
 if [ -d $HOME/github/wasm-micro-runtime/product-mini/platforms/linux/build ]; then
-	PATH="$HOME/github/wasm-micro-runtime/product-mini/platforms/linux/build:$PATH"
+    PATH="$HOME/github/wasm-micro-runtime/product-mini/platforms/linux/build:$PATH"
 fi
 
 LIBPATH=$HOME/lib/ssl
 
 # set PATH so it includes user's private bin if it exists
-if [ -d "$HOME/bin" ] ; then
+if [ -d "$HOME/bin" ]; then
     PATH="$HOME/bin:$PATH"
 fi
 
 # set PATH so it includes user's private bin if it exists
-if [ -d "$HOME/.local/bin" ] ; then
+if [ -d "$HOME/.local/bin" ]; then
     PATH="$HOME/.local/bin:$PATH"
 fi
 

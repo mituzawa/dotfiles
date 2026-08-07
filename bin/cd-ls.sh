@@ -1,1 +1,2 @@
-cd ~/github; ls
+cd ~/github
+ls

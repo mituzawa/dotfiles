@@ -21,8 +21,8 @@ TARGETS=(
 )
 
 link_file() {
-    local src="$DOTFILES_DIR/$1"   # Link target (dotfiles side)
-    local dst="$HOME_DIR/$2"       # Link source (home side)
+    local src="$DOTFILES_DIR/$1" # Link target (dotfiles side)
+    local dst="$HOME_DIR/$2"     # Link source (home side)
     local org="${dst}_ORG"
 
     # Skip if the file does not exist in dotfiles
