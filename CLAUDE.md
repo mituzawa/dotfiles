@@ -140,7 +140,35 @@ If per-server behaviour is ever needed, `vim.lsp.config('*', { on_attach = ... }
 
 Scripts in `bin/` are standalone shell utilities (QEMU/TPM setup, buildroot helpers, SSH shortcuts, etc.). No build step required.
 
-`.profile` is the login shell entry point: it sources `.bashrc`, then prepends every toolchain directory to `PATH` (nvim, ARM toolchains, wasmtime, WASI SDK, wasm-micro-runtime, `~/bin`, `~/.local/bin`, `~/go/bin`), each guarded by a `-d` test. Because each block prepends, the effective priority runs bottom-to-top, so `~/go/bin` wins. `bin/clean-wsl-path.sh` is sourced last and must stay last: it rebuilds `PATH` with empty entries and entries containing spaces dropped, which is what keeps WSL's injected `C:\Program Files\...` paths out. `.bashrc` is the Debian skeleton plus `BROWSER=wslview`, the `KEYSTONE*` exports, `view='nvim -R'`, and conditional sourcing of `~/.cargo/env`, `~/.deno/env` and bash-completion.
+### Login shell (`.profile`)
+
+`.profile` sources `.bashrc` first, then does nothing but build `PATH`. Every block is a `-d` test wrapping a **prepend**, so the file reads top-to-bottom but the resulting priority runs bottom-to-top:
+
+| Priority | Path | Holds |
+|---|---|---|
+| 1 | `~/go/bin` | `go install` output |
+| 2 | `~/.local/bin` | pip / user-local installs |
+| 3 | `~/bin` | this repo's `bin/`, symlinked by `setup.sh` |
+| 4 | `~/github/wasm-micro-runtime/product-mini/platforms/linux/build` | `iwasm` |
+| 5 | `~/images/wasi-sdk-33.0-x86_64-linux/bin` | WASI SDK |
+| 6 | `$WASMTIME_HOME/bin` | wasmtime |
+| 7 | `~/bin/arm-gnu-toolchain-12.3.rel1-x86_64-aarch64-none-linux-gnu/bin` | aarch64 cross toolchain |
+| 8 | `~/bin/gcc-arm-11.2-2022.02-x86_64-aarch64-none-linux-gnu/bin` | older aarch64 cross toolchain |
+| 9 | `/opt/nvim-linux-x86_64/bin` | Neovim |
+
+Adding a block at the bottom therefore gives it the *highest* precedence, not the lowest.
+
+`bin/clean-wsl-path.sh` is sourced last and must stay last. It splits `PATH` on `:` and rebuilds it with empty entries and entries containing spaces dropped, which is what keeps WSL's injected `C:\Program Files\...` paths out. Anything appended after it escapes the filter.
+
+Each block must also test the same thing it uses. The wasmtime entry used to test `-d $HOME/.wasmtime` while expanding `$WASMTIME_HOME`, which `.bashrc` exported — and `.bashrc` returns early in a non-interactive shell, well before that export. So `bash -lc`, `ssh host cmd` and cron got an empty expansion and silently prepended `/bin` (`/usr/bin` under merged-usr) into slot 6, ahead of `/opt/nvim-linux-x86_64/bin` and `~/.cargo/bin`. Nothing was actually shadowed, but the export now lives in the same block as the `PATH` line that consumes it. `WASMTIME_HOME` is consequently unset in a non-login interactive shell, which is correct: that shell does not get the `PATH` entry either.
+
+Note that mason's `~/.local/share/nvim/mason/bin` is not here — Neovim prepends that itself, which is why the formatter binaries resolve inside nvim but not in a plain shell.
+
+### Interactive shell (`.bashrc`)
+
+Lines 1-88 are the stock Debian skeleton (non-interactive early return, `histappend`, `checkwinsize`, lesspipe, `PS1`, dircolors and the `--color=auto` aliases). Everything below that is local: `BROWSER=wslview`, the eight `KEYSTONE*` / `BUILDROOT_BUILDDIR` exports, a `uname -m` case that sets `TZ` only on riscv64 hardware, `view='nvim -R'`, conditional sourcing of `~/.bash_aliases`, bash-completion, `~/.cargo/env` and `~/.deno/env`, and the ssh-agent block below.
+
+The early return at the top means none of this reaches a non-interactive shell. Claude Code still sees these variables because its environment is captured from the profile once at session start.
 
 ### ssh-agent and the git remote
 

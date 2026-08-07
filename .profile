@@ -29,7 +29,8 @@ if [ -d "$HOME/bin/arm-gnu-toolchain-12.3.rel1-x86_64-aarch64-none-linux-gnu/bin
     PATH="$HOME/bin/arm-gnu-toolchain-12.3.rel1-x86_64-aarch64-none-linux-gnu/bin:$PATH"
 fi
 
-if [ -d $HOME/.wasmtime ]; then
+if [ -d "$HOME/.wasmtime" ]; then
+    export WASMTIME_HOME="$HOME/.wasmtime"
     PATH="$WASMTIME_HOME/bin:$PATH"
 fi
 

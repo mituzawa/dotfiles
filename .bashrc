@@ -150,10 +150,6 @@ if [ -f $HOME/.local/share/bash-completion/completions/deno.bash ]; then
     source $HOME/.local/share/bash-completion/completions/deno.bash
 fi
 
-if [ -d $HOME/.wasmtime ]; then
-    export WASMTIME_HOME="$HOME/.wasmtime"
-fi
-
 # Reuse one ssh-agent across shells via a fixed socket path, so the github.com
 # key's passphrase only has to be typed once per WSL boot:
 #   ssh-add ~/.ssh/id_ed25519
