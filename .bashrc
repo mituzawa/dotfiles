@@ -154,9 +154,14 @@ if [ -d $HOME/.wasmtime ]; then
     export WASMTIME_HOME="$HOME/.wasmtime"
 fi
 
-# export NVM_DIR="$HOME/.nvm"
-# [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-# [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-# if [ -d $NVM_DIR ]; then
-#         nvm alias default 22
-# fi
+# Reuse one ssh-agent across shells via a fixed socket path, so the github.com
+# key's passphrase only has to be typed once per WSL boot:
+#   ssh-add ~/.ssh/id_ed25519
+# ssh-add -l exits 2 when no agent answers, and 1 when one is running but holds
+# no keys -- only the former should spawn a replacement.
+export SSH_AUTH_SOCK="$HOME/.ssh/agent.sock"
+ssh-add -l >/dev/null 2>&1
+if [ $? -eq 2 ]; then
+    rm -f "$SSH_AUTH_SOCK"
+    ssh-agent -a "$SSH_AUTH_SOCK" >/dev/null 2>&1
+fi
