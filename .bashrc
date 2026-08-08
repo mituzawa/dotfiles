@@ -16,8 +16,11 @@ HISTCONTROL=ignoreboth
 shopt -s histappend
 
 # for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
-HISTSIZE=1000
-HISTFILESIZE=2000
+# Raised from the Debian skeleton's 1000/2000 to give fzf's CTRL-R something to
+# search: the 1:2 ratio is kept, so the file holds roughly two sessions' worth
+# more than one shell keeps in memory.
+HISTSIZE=10000
+HISTFILESIZE=20000
 
 # check the window size after each command and, if necessary,
 # update the values of LINES and COLUMNS.
@@ -135,6 +138,52 @@ if ! shopt -oq posix; then
         . /usr/share/bash-completion/bash_completion
     elif [ -f /etc/bash_completion ]; then
         . /etc/bash_completion
+    fi
+fi
+
+# fzf. The apt package is 0.44, which predates "fzf --bash", so the two
+# integration files are sourced by path instead. They belong here rather than
+# in .profile: both are interactive-only (they return early otherwise), and
+# completion.bash wraps the completions already installed, so it has to run
+# after the bash-completion block above.
+if command -v fzf >/dev/null 2>&1; then
+    export FZF_DEFAULT_OPTS="--height=40% --layout=reverse --border --info=inline --cycle"
+
+    # fd is packaged as fdfind on Debian/Ubuntu. Using it over the bundled find
+    # walk is what skips .gitignore matches; --hidden and --follow put back the
+    # dotfiles and symlinks find would have listed, and --exclude .git keeps
+    # --hidden from dumping the object store.
+    if command -v fdfind >/dev/null 2>&1; then
+        export FZF_DEFAULT_COMMAND='fdfind --type f --type l --hidden --follow --exclude .git'
+        export FZF_CTRL_T_COMMAND='fdfind --hidden --follow --exclude .git'
+        export FZF_ALT_C_COMMAND='fdfind --type d --hidden --follow --exclude .git'
+
+        # The ** trigger does not read the variables above; it calls these two
+        # hooks, which completion.bash only defines if they do not exist yet.
+        # Spelled out rather than built from a shared variable, because the
+        # bodies are expanded at call time -- a variable would have to outlive
+        # this block.
+        _fzf_compgen_path() { fdfind --hidden --follow --exclude .git . "$1"; }
+        _fzf_compgen_dir() { fdfind --type d --hidden --follow --exclude .git . "$1"; }
+    fi
+
+    # {} arrives shell-quoted, so the directory test and head both stay safe on
+    # paths with spaces.
+    export FZF_CTRL_T_OPTS="--preview 'if [ -d {} ]; then ls -A --color=always {}; else head -200 {} 2>/dev/null; fi' --preview-window=right:60%:wrap"
+    export FZF_ALT_C_OPTS="--preview 'ls -A --color=always {}' --preview-window=right:50%"
+    # History lines are often longer than the window; ? unfolds the selection.
+    export FZF_CTRL_R_OPTS="--preview 'echo {}' --preview-window=down:3:hidden:wrap --bind '?:toggle-preview'"
+
+    # CTRL-T paste path, CTRL-R search history, ALT-C cd into subdirectory.
+    if [ -f /usr/share/doc/fzf/examples/key-bindings.bash ]; then
+        . /usr/share/doc/fzf/examples/key-bindings.bash
+    fi
+    # Debian ships fzf's completion.bash here, not under examples/. Sourcing it
+    # by hand rather than leaving it to bash-completion's lazy loader, which
+    # would only fire on "fzf<TAB>" and never install the ** trigger for other
+    # commands.
+    if [ -f /usr/share/bash-completion/completions/fzf ]; then
+        . /usr/share/bash-completion/completions/fzf
     fi
 fi
 

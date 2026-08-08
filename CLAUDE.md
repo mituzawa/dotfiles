@@ -197,9 +197,33 @@ Two alternatives were rejected. Stripping `PATH` only around the Keystone build 
 
 ### Interactive shell (`.bashrc`)
 
-Lines 1-88 are the stock Debian skeleton (non-interactive early return, `histappend`, `checkwinsize`, lesspipe, `PS1`, dircolors and the `--color=auto` aliases). Everything below that is local: `BROWSER=wslview`, the eight `KEYSTONE*` / `BUILDROOT_BUILDDIR` exports, a `uname -m` case that sets `TZ` only on riscv64 hardware, `view='nvim -R'`, conditional sourcing of `~/.bash_aliases`, bash-completion, `~/.cargo/env` and `~/.deno/env`, and the ssh-agent block below.
+Lines 1-91 are the stock Debian skeleton (non-interactive early return, `histappend`, `checkwinsize`, lesspipe, `PS1`, dircolors and the `--color=auto` aliases) with one edit: `HISTSIZE` / `HISTFILESIZE` were raised from 1000 / 2000 to 10000 / 20000, keeping the skeleton's 1:2 ratio, so fzf's `CTRL-R` has something to search. Everything below that is local: `BROWSER=wslview`, the eight `KEYSTONE*` / `BUILDROOT_BUILDDIR` exports, a `uname -m` case that sets `TZ` only on riscv64 hardware, `view='nvim -R'`, conditional sourcing of `~/.bash_aliases`, bash-completion, the fzf block and `~/.cargo/env` / `~/.deno/env`, and the ssh-agent block below.
 
 The early return at the top means none of this reaches a non-interactive shell. Claude Code still sees these variables because its environment is captured from the profile once at session start.
+
+### fzf
+
+fzf is the apt package (`/usr/bin/fzf`, 0.44). Its configuration is in `.bashrc` rather than `.profile`, which does nothing but build `PATH` — `/usr/bin` is already on it, and both integration scripts return early in a non-interactive shell anyway.
+
+| Key | Action |
+|---|---|
+| `CTRL-T` | Insert a path at the cursor (preview in the right 60%) |
+| `CTRL-R` | Search command history (`?` toggles a full-text preview of the selection) |
+| `ALT-C` | `cd` into a subdirectory (`ls` preview) |
+| `**<TAB>` | Complete anywhere — `vim **<TAB>`, `kill **<TAB>`, `ssh **<TAB>` |
+
+0.44 predates `fzf --bash` (0.48), so the two integration files are sourced by path. They are not in the same place: key bindings ship as `/usr/share/doc/fzf/examples/key-bindings.bash`, but Debian installs the completion as `/usr/share/bash-completion/completions/fzf` — there is no `examples/completion.bash`, only the zsh one. Both are guarded with `-f` so the block survives fzf being uninstalled.
+
+Two ordering traps:
+
+- The completion has to be sourced **after** the bash-completion block above it, because it wraps whatever completions are already installed.
+- It has to be sourced **explicitly**, not left to bash-completion's lazy loader. The loader keys on the command name, so it would only fire on `fzf<TAB>` — the `**` trigger for every *other* command would never be installed.
+
+File listing goes through **fdfind** (the Debian/Ubuntu name for `fd`) instead of the bundled `find` walk, which is what skips `.gitignore` matches. `--hidden --follow` put back the dotfiles and symlinks `find` would have listed, and `--exclude .git` stops `--hidden` from dumping the object store.
+
+`FZF_CTRL_T_COMMAND` and `FZF_ALT_C_COMMAND` cover the key bindings, but the `**` trigger reads neither — it calls the `_fzf_compgen_path` / `_fzf_compgen_dir` hooks, which `completion.bash` defines only if they do not already exist, so the block defines them first. Their bodies spell the `fdfind` invocation out instead of interpolating a shared variable: function bodies expand at call time, so such a variable would have to stay set in every interactive shell for the hooks to keep working.
+
+Everything is gated on `command -v fzf`, and the fdfind-specific half on `command -v fdfind`, so the block degrades to fzf's built-in `find` behaviour rather than breaking on a machine with only one of them.
 
 ### ssh-agent and the git remote
 
