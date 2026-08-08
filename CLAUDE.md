@@ -50,10 +50,10 @@ nvim/lua/
   darkpowerd/   dpp.lua (bootstrap), ddu.lua (fuzzy finder config)
   option/       option.lua (editor settings), cmd.lua, colorscheme.lua, cd.lua
   keymap/       keymap.lua (leader mappings), yankround.lua
-  plugins/      lspconfig.lua, formatter.lua, nvim-tree.lua, autocmd.lua
+  plugins/      lspconfig.lua, formatter.lua, nvim-tree.lua, autocmd.lua, claude_transcript.lua
 ```
 
-`init.lua` requires every module under `lua/`: `option/option`, `option/cd`, `darkpowerd/dpp`, `darkpowerd/ddu`, `keymap/keymap`, `keymap/yankround`, `plugins/lspconfig`, `plugins/formatter`, `plugins/nvim-tree` and `plugins/autocmd`. Nothing is commented out any more. Note `init.lua` wraps everything in `if not vim.g.vscode`, so nothing loads under vscode-neovim.
+`init.lua` requires every module under `lua/`: `option/option`, `option/cd`, `darkpowerd/dpp`, `darkpowerd/ddu`, `keymap/keymap`, `keymap/yankround`, `plugins/lspconfig`, `plugins/formatter`, `plugins/nvim-tree`, `plugins/autocmd` and `plugins/claude_transcript`. Nothing is commented out any more. Note `init.lua` wraps everything in `if not vim.g.vscode`, so nothing loads under vscode-neovim.
 
 ### Format-on-save
 
@@ -109,6 +109,7 @@ ddu accounts for 16 of the 35 plugin entries in `dein.toml` — each source, fil
 | `,ac` / `,af` | Claude Code toggle / focus |
 | `,ar` / `,ak` | Resume Claude session (`--resume`, picker) / continue the latest one (`--continue`) |
 | `,ab` / `,at` | Add current buffer / file under tree cursor to Claude |
+| `,al` | `:ClaudeLog` — read back the Claude pane's scrollback (`lua/plugins/claude_transcript.lua`) |
 | `,as` (visual) | Send selection to Claude |
 | `<Space>cd` | `:CD` — `lcd` to the current file's directory (`lua/option/cd.lua`) |
 | `p` / `P` | Paste through yankround |
@@ -123,6 +124,23 @@ ddu accounts for 16 of the 35 plugin entries in `dein.toml` — each source, fil
 ```vim
 :lua print(vim.inspect(require("claudecode").state.config.terminal))
 ```
+
+### Reading back the Claude pane (`:ClaudeLog`, `,al`)
+
+**The Claude Code pane has no scrollback in nvim's sense.** It emits `ESC[?1049h` at startup, so it runs on the alternate screen: the terminal buffer only ever holds the frame currently on display. `<C-\><C-n>` followed by `k` therefore has nothing above it to reach, and this is structural, not a misconfiguration — `,ug` (LazyGit) behaves the same way.
+
+Claude Code also enables mouse reporting (`ESC[?1000h`, `?1002h`, `?1003h`, `?1006h`), so nvim forwards wheel events to it rather than scrolling the buffer. That happens regardless of `'mouse'`, but with `mouse = ""` (which `option.lua` sets) nvim never asks the outer terminal to report the wheel in the first place, so nothing arrives to forward.
+
+`lua/plugins/claude_transcript.lua` reads the conversation off disk instead. Sessions live at `~/.claude/projects/<slugified-cwd>/<session-uuid>.jsonl`, one JSON object per line:
+
+- The slug is the directory Claude started in with every non-alphanumeric character replaced by `-`, so `/home/mituzawa/dotfiles` becomes `-home-mituzawa-dotfiles`. It resolves the **git root**, since `git_repo_cwd = true` is what the terminal spawns at.
+- The current session is just the most recently modified `.jsonl` in that directory; `--resume` and `--continue` keep appending to the file they reopened.
+- `:ClaudeLog` renders `user` and `assistant` records into a markdown scratch buffer in a new tab and lands on the last line. `:ClaudeLog!` opens the raw `.jsonl` instead. Both are opened `modifiable = false` + `readonly = true` — the raw one especially, since it is a real file that the running session is still appending to.
+
+Two things the format forces:
+
+- `thinking` blocks are stored with the text stripped — only `signature` survives — so they are skipped rather than rendered as empty markers.
+- Truncation of tool arguments and results counts characters via `strcharpart`, not bytes. `string.sub` cuts multibyte characters in half, and the resulting invalid UTF-8 is enough to make GNU grep stop matching the buffer's text.
 
 ### LSP
 

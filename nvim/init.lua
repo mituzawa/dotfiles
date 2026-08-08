@@ -21,4 +21,5 @@ if not vim.g.vscode then
 	require("plugins/formatter")
 	require("plugins/nvim-tree")
 	require("plugins/autocmd")
+	require("plugins/claude_transcript")
 end

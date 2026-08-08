@@ -33,3 +33,5 @@ vim.keymap.set("n", ",ak", "<cmd>ClaudeCode --continue<cr>", vim.tbl_extend("for
 vim.keymap.set("n", ",ab", "<cmd>ClaudeCodeAdd %<cr>", vim.tbl_extend("force", claude_opts, { desc = "Add buffer to Claude" }))
 vim.keymap.set("v", ",as", "<cmd>ClaudeCodeSend<cr>", vim.tbl_extend("force", claude_opts, { desc = "Send selection to Claude" }))
 vim.keymap.set("n", ",at", "<cmd>ClaudeCodeTreeAdd<cr>", vim.tbl_extend("force", claude_opts, { desc = "Add file from tree" }))
+-- ,al は Claude ペインで流れて見えなくなった部分を読み返す用（lua/plugins/claude_transcript.lua）
+vim.keymap.set("n", ",al", "<cmd>ClaudeLog<cr>", vim.tbl_extend("force", claude_opts, { desc = "Open Claude transcript" }))
