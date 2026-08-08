@@ -25,6 +25,16 @@ if [ -d "$HOME/.wasmtime" ]; then
     export WASMTIME_HOME="$HOME/.wasmtime"
 fi
 
+# The WASI SDK deliberately stays off PATH. Its bin/ ships clang, clang++ and
+# LLVM binutils under the plain names ar, nm, objcopy, objdump, ranlib, size,
+# strings and strip, so putting it ahead of /usr/bin made "clang foo.c" emit a
+# WebAssembly module instead of an ELF binary -- bin/clang.cfg pins the target
+# to wasm32-unknown-wasip1. Build systems read WASI_SDK_PATH; anything else
+# should spell out "$WASI_SDK_PATH/bin/clang".
+if [ -d "$HOME/images/wasi-sdk-33.0-x86_64-linux" ]; then
+    export WASI_SDK_PATH="$HOME/images/wasi-sdk-33.0-x86_64-linux"
+fi
+
 # _path_add tests the directory it is about to add, so the two can never drift
 # apart the way a hand-written "if [ -d A ]; then PATH=B:$PATH; fi" pair can.
 _path_add() {
@@ -41,7 +51,6 @@ _path_add "$HOME/go/bin"                                                       #
 _path_add "$HOME/.local/bin"                                                   # pip / user-local installs
 _path_add "$HOME/bin"                                                          # dotfiles bin/, symlinked by setup.sh
 _path_add "$HOME/github/wasm-micro-runtime/product-mini/platforms/linux/build" # iwasm
-_path_add "$HOME/images/wasi-sdk-33.0-x86_64-linux/bin"                        # WASI SDK
 _path_add "${WASMTIME_HOME:+$WASMTIME_HOME/bin}"                               # wasmtime
 _path_add "/opt/nvim-linux-x86_64/bin"                                         # Neovim
 

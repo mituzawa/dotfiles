@@ -150,9 +150,8 @@ Scripts in `bin/` are standalone shell utilities (QEMU/TPM setup, buildroot help
 | 2 | `~/.local/bin` | pip / user-local installs |
 | 3 | `~/bin` | this repo's `bin/`, symlinked by `setup.sh` |
 | 4 | `~/github/wasm-micro-runtime/product-mini/platforms/linux/build` | `iwasm` |
-| 5 | `~/images/wasi-sdk-33.0-x86_64-linux/bin` | WASI SDK |
-| 6 | `$WASMTIME_HOME/bin` | wasmtime |
-| 7 | `/opt/nvim-linux-x86_64/bin` | Neovim |
+| 5 | `$WASMTIME_HOME/bin` | wasmtime |
+| 6 | `/opt/nvim-linux-x86_64/bin` | Neovim |
 
 A new entry goes at the position it should occupy — no mental inversion. This replaced seven `if [ -d X ]; then PATH="Y:$PATH"; fi` blocks, where the last block written won and adding one at the bottom silently gave it the *highest* precedence.
 
@@ -166,7 +165,18 @@ The space filter is not cosmetic: Buildroot's `support/dependencies/dependencies
 
 The wasmtime entry is the one that cannot be written plainly. `WASMTIME_HOME` is exported by its own `-d "$HOME/.wasmtime"` block above the list, and the list references it as `${WASMTIME_HOME:+$WASMTIME_HOME/bin}` so an unset value expands to the empty string, which `_path_add` skips. A bare `"$WASMTIME_HOME/bin"` would expand to `/bin` instead — a directory that exists, so it would silently join the list.
 
-That is not hypothetical. The export used to live in `.bashrc` while `.profile` tested `-d $HOME/.wasmtime` and expanded `$WASMTIME_HOME`; since `.bashrc` returns early in a non-interactive shell, `bash -lc`, `ssh host cmd` and cron all got the empty expansion and prepended `/bin` (`/usr/bin` under merged-usr) into slot 6. Nothing was actually shadowed. `WASMTIME_HOME` is unset in a non-login interactive shell, which is correct: that shell does not get the `PATH` entry either.
+That is not hypothetical. The export used to live in `.bashrc` while `.profile` tested `-d $HOME/.wasmtime` and expanded `$WASMTIME_HOME`; since `.bashrc` returns early in a non-interactive shell, `bash -lc`, `ssh host cmd` and cron all got the empty expansion and prepended `/bin` (`/usr/bin` under merged-usr) into the list. Nothing was actually shadowed. `WASMTIME_HOME` is unset in a non-login interactive shell, which is correct: that shell does not get the `PATH` entry either.
+
+### The WASI SDK is deliberately not on `PATH`
+
+`.profile` exports `WASI_SDK_PATH=$HOME/images/wasi-sdk-33.0-x86_64-linux` and stops there — the SDK's `bin/` used to sit at priority 5, ahead of `/usr/bin`, and that shadowed the host toolchain:
+
+- `clang` and `clang++` resolved to the SDK's clang-22, whose `bin/clang.cfg` pins the target to `wasm32-unknown-wasip1` and points at the bundled wasi-sysroot. `clang hello.c` produced a WebAssembly module, silently, where `/usr/bin/clang` (Ubuntu 18.1.3, x86_64) would have produced an ELF binary.
+- `ar`, `nm`, `objcopy`, `objdump`, `ranlib`, `size`, `strings`, `strip` and `c++filt` are symlinks to the `llvm-*` tools. Those do handle ELF, so nothing broke outright, but their flags and output differ from GNU binutils — which matters for Buildroot, and therefore for the Keystone build.
+
+Build systems read `WASI_SDK_PATH` (the CMake toolchain file included with the SDK does). Anything else should spell out `$WASI_SDK_PATH/bin/clang`. The uniquely named tools — `wasm-ld`, `llvm-*`, `clang-22` — went off `PATH` along with the rest, so they need the same prefix.
+
+Everything still on the list is collision-free against `/usr/bin`: `~/.local/bin` wins `docutils` and the `rst2*` scripts from the apt package, which is the point of a pip user install, and the wamr build directory holds only `iwasm` and `test_wrgsbase`.
 
 Note that mason's `~/.local/share/nvim/mason/bin` is not here — Neovim prepends that itself, which is why the formatter binaries resolve inside nvim but not in a plain shell.
 
