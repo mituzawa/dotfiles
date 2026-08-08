@@ -17,37 +17,38 @@ if [ -n "$BASH_VERSION" ]; then
 fi
 
 # added begin
-if [ -d "/opt/nvim-linux-x86_64/bin" ]; then
-    PATH="/opt/nvim-linux-x86_64/bin:$PATH"
-fi
-
+# WASMTIME_HOME is exported here rather than beside its PATH entry, and that
+# entry is written as ${WASMTIME_HOME:+...} so an unset value contributes
+# nothing: a bare "$WASMTIME_HOME/bin" expands to "/bin", which exists and would
+# silently join the list.
 if [ -d "$HOME/.wasmtime" ]; then
     export WASMTIME_HOME="$HOME/.wasmtime"
-    PATH="$WASMTIME_HOME/bin:$PATH"
 fi
 
-if [ -d $HOME/images/wasi-sdk-33.0-x86_64-linux/bin ]; then
-    PATH="$HOME/images/wasi-sdk-33.0-x86_64-linux/bin:$PATH"
-fi
+# _path_add tests the directory it is about to add, so the two can never drift
+# apart the way a hand-written "if [ -d A ]; then PATH=B:$PATH; fi" pair can.
+_path_add() {
+    if [ -d "$1" ]; then
+        _path_head="${_path_head:+$_path_head:}$1"
+    fi
+}
 
-if [ -d $HOME/github/wasm-micro-runtime/product-mini/platforms/linux/build ]; then
-    PATH="$HOME/github/wasm-micro-runtime/product-mini/platforms/linux/build:$PATH"
-fi
+# Highest priority first -- this list reads in the same order as the resulting
+# PATH, so a new entry goes at the position it should occupy. The whole set is
+# prepended to the inherited PATH in one step below.
+_path_head=""
+_path_add "$HOME/go/bin"                                                       # "go install" output
+_path_add "$HOME/.local/bin"                                                   # pip / user-local installs
+_path_add "$HOME/bin"                                                          # dotfiles bin/, symlinked by setup.sh
+_path_add "$HOME/github/wasm-micro-runtime/product-mini/platforms/linux/build" # iwasm
+_path_add "$HOME/images/wasi-sdk-33.0-x86_64-linux/bin"                        # WASI SDK
+_path_add "${WASMTIME_HOME:+$WASMTIME_HOME/bin}"                               # wasmtime
+_path_add "/opt/nvim-linux-x86_64/bin"                                         # Neovim
 
-# set PATH so it includes user's private bin if it exists
-if [ -d "$HOME/bin" ]; then
-    PATH="$HOME/bin:$PATH"
-fi
+PATH="${_path_head:+$_path_head:}$PATH"
 
-# set PATH so it includes user's private bin if it exists
-if [ -d "$HOME/.local/bin" ]; then
-    PATH="$HOME/.local/bin:$PATH"
-fi
-
-# set PATH so it includes binaries installed by "go install"
-if [ -d "$HOME/go/bin" ]; then
-    PATH="$HOME/go/bin:$PATH"
-fi
+unset -f _path_add
+unset _path_head
 
 if [ -f "$HOME/bin/clean-wsl-path.sh" ]; then
     . "$HOME/bin/clean-wsl-path.sh"
