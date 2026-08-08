@@ -164,7 +164,11 @@ if command -v fzf >/dev/null 2>&1; then
         # bodies are expanded at call time -- a variable would have to outlive
         # this block.
         _fzf_compgen_path() { fdfind --hidden --follow --exclude .git . "$1"; }
-        _fzf_compgen_dir() { fdfind --type d --hidden --follow --exclude .git . "$1"; }
+        # The trailing slash fd puts on a directory is right for _fzf_compgen_path
+        # -- that completion appends nothing, and "-o nospace" then lets the next
+        # ** keep descending. _fzf_dir_completion appends a "/" of its own, though,
+        # so cd/pushd/rmdir would be handed "./nvim//" without stripping it here.
+        _fzf_compgen_dir() { fdfind --type d --hidden --follow --exclude .git . "$1" | command sed 's|/$||'; }
     fi
 
     # {} arrives shell-quoted, so the directory test and head both stay safe on

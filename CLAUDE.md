@@ -211,6 +211,7 @@ fzf is the apt package (`/usr/bin/fzf`, 0.44). Its configuration is in `.bashrc`
 | `CTRL-R` | Search command history (`?` toggles a full-text preview of the selection) |
 | `ALT-C` | `cd` into a subdirectory (`ls` preview) |
 | `**<TAB>` | Complete anywhere — `vim **<TAB>`, `kill **<TAB>`, `ssh **<TAB>` |
+| `cd **<TAB>` | Directories only — same for `pushd` and `rmdir` |
 
 0.44 predates `fzf --bash` (0.48), so the two integration files are sourced by path. They are not in the same place: key bindings ship as `/usr/share/doc/fzf/examples/key-bindings.bash`, but Debian installs the completion as `/usr/share/bash-completion/completions/fzf` — there is no `examples/completion.bash`, only the zsh one. Both are guarded with `-f` so the block survives fzf being uninstalled.
 
@@ -222,6 +223,8 @@ Two ordering traps:
 File listing goes through **fdfind** (the Debian/Ubuntu name for `fd`) instead of the bundled `find` walk, which is what skips `.gitignore` matches. `--hidden --follow` put back the dotfiles and symlinks `find` would have listed, and `--exclude .git` stops `--hidden` from dumping the object store.
 
 `FZF_CTRL_T_COMMAND` and `FZF_ALT_C_COMMAND` cover the key bindings, but the `**` trigger reads neither — it calls the `_fzf_compgen_path` / `_fzf_compgen_dir` hooks, which `completion.bash` defines only if they do not already exist, so the block defines them first. Their bodies spell the `fdfind` invocation out instead of interpolating a shared variable: function bodies expand at call time, so such a variable would have to stay set in every interactive shell for the hooks to keep working.
+
+`cd` needs no configuration — `completion.bash` routes `cd`, `pushd` and `rmdir` through `_fzf_dir_completion` by default (`FZF_COMPLETION_DIR_COMMANDS` overrides the list). It does need one fix, though: fd prints a directory with a trailing `/` and `_fzf_dir_completion` appends a `/` of its own, so `_fzf_compgen_dir` pipes through `sed 's|/$||'` to keep `cd **<TAB>` from inserting `./nvim//`. `_fzf_compgen_path` deliberately keeps fd's slash — `_fzf_path_completion` appends nothing, and its `-o nospace` then lets a second `**` keep descending from the directory just accepted.
 
 Everything is gated on `command -v fzf`, and the fdfind-specific half on `command -v fdfind`, so the block degrades to fzf's built-in `find` behaviour rather than breaking on a machine with only one of them.
 
