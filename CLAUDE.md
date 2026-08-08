@@ -174,7 +174,9 @@ That is not hypothetical. The export used to live in `.bashrc` while `.profile` 
 - `clang` and `clang++` resolved to the SDK's clang-22, whose `bin/clang.cfg` pins the target to `wasm32-unknown-wasip1` and points at the bundled wasi-sysroot. `clang hello.c` produced a WebAssembly module, silently, where `/usr/bin/clang` (Ubuntu 18.1.3, x86_64) would have produced an ELF binary.
 - `ar`, `nm`, `objcopy`, `objdump`, `ranlib`, `size`, `strings`, `strip` and `c++filt` are symlinks to the `llvm-*` tools. Those do handle ELF, so nothing broke outright, but their flags and output differ from GNU binutils — which matters for Buildroot, and therefore for the Keystone build.
 
-Build systems read `WASI_SDK_PATH` (the CMake toolchain file included with the SDK does). Anything else should spell out `$WASI_SDK_PATH/bin/clang`. The uniquely named tools — `wasm-ld`, `llvm-*`, `clang-22` — went off `PATH` along with the rest, so they need the same prefix.
+Build systems read `WASI_SDK_PATH` (the CMake toolchain file included with the SDK does). Anything else should spell out `$WASI_SDK_PATH/bin/clang`. The uniquely named tools — `llvm-*`, `clang-22` — went off `PATH` along with the rest, so they need the same prefix.
+
+`bin/wasm-ld` is the exception, a shim for the one that gets typed by hand. It falls back to the install path when `WASI_SDK_PATH` is unset, which is the case in a non-login shell since `.profile` is what exports it. It execs `$WASI_SDK_PATH/bin/wasm-ld` rather than `lld` on purpose: that file is a symlink to `lld`, and LLD picks its driver from `argv[0]`, so the name is what selects the wasm linker over `ld.lld` or `lld-link`.
 
 Everything still on the list is collision-free against `/usr/bin`: `~/.local/bin` wins `docutils` and the `rst2*` scripts from the apt package, which is the point of a pip user install, and the wamr build directory holds only `iwasm` and `test_wrgsbase`.
 

@@ -1,0 +1,24 @@
+#!/bin/sh
+# Run the WASI SDK's wasm-ld from a shell where the SDK is not on PATH.
+#
+# .profile exports WASI_SDK_PATH but deliberately keeps the SDK's bin/ off PATH,
+# because it shadows clang, clang++ and the GNU binutils names -- see CLAUDE.md.
+# That puts the uniquely named tools out of reach as well, so this shim restores
+# the one that gets typed by hand.
+#
+# WASI_SDK_PATH is unset in a non-login shell, since .profile is what exports
+# it, so fall back to the install location rather than failing there.
+#
+# The SDK's wasm-ld is a symlink to lld, which picks its driver from argv[0].
+# Exec'ing the wasm-ld name rather than lld is what selects the wasm linker.
+
+set -e
+
+_sdk="${WASI_SDK_PATH:-$HOME/images/wasi-sdk-33.0-x86_64-linux}"
+
+if [ ! -x "$_sdk/bin/wasm-ld" ]; then
+    echo "wasm-ld: not found under $_sdk" >&2
+    exit 1
+fi
+
+exec "$_sdk/bin/wasm-ld" "$@"
