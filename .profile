@@ -47,9 +47,9 @@ _path_add() {
 # PATH, so a new entry goes at the position it should occupy. The whole set is
 # prepended to the inherited PATH in one step below.
 _path_head=""
-_path_add "$HOME/go/bin"                                                       # "go install" output
-_path_add "$HOME/.local/bin"                                                   # pip / user-local installs
 _path_add "$HOME/bin"                                                          # dotfiles bin/, symlinked by setup.sh
+_path_add "$HOME/.local/bin"                                                   # pip / user-local installs
+_path_add "$HOME/go/bin"                                                       # "go install" output
 _path_add "$HOME/github/wasm-micro-runtime/product-mini/platforms/linux/build" # iwasm
 _path_add "${WASMTIME_HOME:+$WASMTIME_HOME/bin}"                               # wasmtime
 _path_add "/opt/nvim-linux-x86_64/bin"                                         # Neovim

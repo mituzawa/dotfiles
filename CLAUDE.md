@@ -146,9 +146,9 @@ Scripts in `bin/` are standalone shell utilities (QEMU/TPM setup, buildroot help
 
 | Priority | Path | Holds |
 |---|---|---|
-| 1 | `~/go/bin` | `go install` output |
+| 1 | `~/bin` | this repo's `bin/`, symlinked by `setup.sh` |
 | 2 | `~/.local/bin` | pip / user-local installs |
-| 3 | `~/bin` | this repo's `bin/`, symlinked by `setup.sh` |
+| 3 | `~/go/bin` | `go install` output |
 | 4 | `~/github/wasm-micro-runtime/product-mini/platforms/linux/build` | `iwasm` |
 | 5 | `$WASMTIME_HOME/bin` | wasmtime |
 | 6 | `/opt/nvim-linux-x86_64/bin` | Neovim |
