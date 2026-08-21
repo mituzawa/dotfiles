@@ -59,6 +59,14 @@ PATH="${_path_head:+$_path_head:}$PATH"
 unset -f _path_add
 unset _path_head
 
+# .bashrc defines "view" only when nvim is on PATH, but it ran before the list
+# above -- the Neovim entry is what puts nvim there. Re-run its guard now that
+# PATH is final; a non-login shell already inherited PATH and did this itself.
+if command -v _view_alias >/dev/null 2>&1; then
+    _view_alias
+    unset -f _view_alias
+fi
+
 if [ -f "$HOME/bin/clean-wsl-path.sh" ]; then
     . "$HOME/bin/clean-wsl-path.sh"
 fi

@@ -119,7 +119,18 @@ alias l='ls -CF'
 alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
 
 # my aliases
-alias view='nvim -R'
+# This is a function rather than a plain "command -v nvim && alias ..." because
+# nvim is not on PATH yet when a login shell reaches this line: .profile sources
+# .bashrc first and builds PATH afterwards, and /opt/nvim-linux-x86_64/bin is
+# the only place nvim lives. A non-login interactive shell inherits the finished
+# PATH, so the call right below defines the alias; the login shell gets it from
+# .profile calling this same function again once the entry has been prepended.
+_view_alias() {
+    if command -v nvim >/dev/null 2>&1; then
+        alias view='nvim -R'
+    fi
+}
+_view_alias
 
 # Alias definitions.
 # You may want to put all your additions into a separate file like
