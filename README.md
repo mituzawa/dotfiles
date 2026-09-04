@@ -83,8 +83,6 @@ nvim --headless -c 'autocmd User Dpp:makeStatePost qall!' \
   -c 'call dpp#make_state(stdpath("cache").."/dpp", stdpath("config").."/config.ts")'
 ```
 
-`bin/init-dpp.sh` predates all of this and clones into `~/.cache/dpp/`, a path nothing reads (`stdpath("cache")` is `~/.cache/nvim`). Do not run it.
-
 ### 7. SSH key and the git remote
 
 ```sh
