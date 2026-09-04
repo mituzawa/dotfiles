@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Personal dotfiles for a Linux/WSL2 environment. The Neovim config is the most structured part; shell configs and scripts live at the repo root and in `bin/`.
 
+`README.md` is the procedure for restoring all of this on a new machine, in order and with the chicken-and-egg steps called out. This file is the reference for why each piece is shaped the way it is. Keep them in sync when the bootstrap changes.
+
 The dotfiles are deployed by symlinking into the home directory via `setup.sh`, which reads the `TARGETS` list (`.bashrc`, `.profile`, `.gitconfig`, `.clang-format`, `.vimrc`, `.vim`, `bin`, `nvim:.config/nvim`) and backs up any pre-existing real file as `<name>_ORG`. `~/.config/nvim/` corresponds to `nvim/` in this repo (e.g. `~/.config/nvim/toml/` → `dotfiles/nvim/toml/`).
 
 `windows/` is outside all of that: those files belong on the Windows side of WSL, cannot be symlinked there, and are copied by `bin/win-sync.sh` instead. See [Windows-side configuration](#windows-side-configuration-windows-binwin-syncsh).
