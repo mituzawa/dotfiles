@@ -1,260 +1,286 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+このファイルは、このリポジトリのコードを扱う際の Claude Code (claude.ai/code) 向けの指針である。
 
-## Repository overview
+## リポジトリ概要
 
-Personal dotfiles for a Linux/WSL2 environment. The Neovim config is the most structured part; shell configs and scripts live at the repo root and in `bin/`.
+Linux/WSL2 環境の個人用 dotfiles。もっとも構造化されているのは Neovim の設定で、シェルの設定とスクリプトはリポジトリ直下と `bin/` にある。
 
-`README.md` is the procedure for restoring all of this on a new machine, in order and with the chicken-and-egg steps called out. This file is the reference for why each piece is shaped the way it is. Keep them in sync when the bootstrap changes.
+`README.md` は、これらすべてを新しいマシンで復元する手順を、順序と鶏と卵の関係を明示して並べたもの。このファイルは、各部分がなぜその形なのかの参照先である。ブートストラップを変えたときは両者を同期させること。
 
-The dotfiles are deployed by symlinking into the home directory via `setup.sh`, which reads the `TARGETS` list (`.bashrc`, `.profile`, `.gitconfig`, `.clang-format`, `.vimrc`, `.vim`, `bin`, `nvim:.config/nvim`) and backs up any pre-existing real file as `<name>_ORG`. `~/.config/nvim/` corresponds to `nvim/` in this repo (e.g. `~/.config/nvim/toml/` → `dotfiles/nvim/toml/`).
+dotfiles は `setup.sh` がホームディレクトリへシンボリックリンクを張ることで配置される。`setup.sh` は `TARGETS` リスト (`.bashrc`, `.profile`, `.gitconfig`, `.clang-format`, `.vimrc`, `.vim`, `bin`, `nvim:.config/nvim`) を読み、既存の実体ファイルは `<name>_ORG` として退避する。`~/.config/nvim/` はこのリポジトリの `nvim/` に対応する（例: `~/.config/nvim/toml/` → `dotfiles/nvim/toml/`）。
 
-`windows/` is outside all of that: those files belong on the Windows side of WSL, cannot be symlinked there, and are copied by `bin/win-sync.sh` instead. See [Windows-side configuration](#windows-side-configuration-windows-binwin-syncsh).
+`windows/` はこの仕組みの外にある。これらのファイルは WSL の Windows 側に属していてシンボリックリンクを張れないので、代わりに `bin/win-sync.sh` がコピーする。[Windows 側の設定](#windows-%E5%81%B4%E3%81%AE%E8%A8%AD%E5%AE%9A-windows-binwin-syncsh)を参照。
 
-## Neovim configuration architecture
+## Neovim 設定のアーキテクチャ
 
-The plugin stack is built on two layers:
+プラグイン構成は 2 つの層の上に成り立っている。
 
-- **denops.vim** — Deno runtime bridge that allows TypeScript/JavaScript plugin code to run inside Neovim.
-- **dpp.vim** — "dark powered" plugin manager that uses denops to run `config.ts` at startup.
+- **denops.vim** — TypeScript/JavaScript のプラグインコードを Neovim 内で動かすための Deno ランタイムブリッジ。
+- **dpp.vim** — denops を使って起動時に `config.ts` を実行する "dark powered" プラグインマネージャ。
 
-### Bootstrap flow
+### ブートストラップの流れ
 
-1. `nvim/init.lua` requires `option/option` (editor options) then `darkpowerd/dpp`.
-1. `lua/darkpowerd/dpp.lua` bootstraps: auto-clones `dpp.vim` and `denops.vim` into `~/.cache/nvim/dpp/` if absent, adds them to runtimepath, then loads the cached plugin state from `~/.cache/nvim/dpp/`.
-1. On first run (or after `:DppMakeState`), `config.ts` is invoked via denops. It reads `toml/dein.toml` (eager plugins) and `toml/dein_lazy.toml` (lazy-loaded by filetype), plus any plugins found under `~/work/` (local development).
-1. The generated state is persisted to disk; subsequent startups load it directly without re-running TypeScript.
+1. `nvim/init.lua` が `option/option`（エディタオプション）を require し、続いて `darkpowerd/dpp` を require する。
+1. `lua/darkpowerd/dpp.lua` がブートストラップを行う。`dpp.vim` と `denops.vim` が無ければ `~/.cache/nvim/dpp/` へ自動 clone し、runtimepath に加えたうえで、`~/.cache/nvim/dpp/` からキャッシュ済みのプラグイン状態を読み込む。
+1. 初回起動時（あるいは `:DppMakeState` の後）に `config.ts` が denops 経由で呼ばれる。これが `toml/dein.toml`（起動時ロード）と `toml/dein_lazy.toml`（ファイルタイプによる遅延ロード）を読み、加えて `~/work/` 以下に見つかったプラグイン（ローカル開発用）も拾う。
+1. 生成された状態はディスクに永続化され、以降の起動は TypeScript を再実行せずそれを直接読み込む。
 
-### Key plugin management commands
+### プラグイン管理の主なコマンド
 
-| Command | Purpose |
+| コマンド | 用途 |
 |---|---|
-| `:DppInstall` | Install all plugins listed in the TOML files |
-| `:DppUpdate [name ...]` | Update all plugins (or named ones) |
-| `:DppMakeState` | Regenerate the plugin state cache after changing TOML files |
+| `:DppInstall` | TOML に列挙されたプラグインをすべてインストールする |
+| `:DppUpdate [name ...]` | すべて（あるいは名前を指定したもの）を更新する |
+| `:DppMakeState` | TOML を変更した後にプラグイン状態のキャッシュを作り直す |
 
-### Adding or removing plugins
+### プラグインの追加・削除
 
-Edit `nvim/toml/dein.toml` (load on startup) or `nvim/toml/dein_lazy.toml` (load on filetype). After saving, run `:DppMakeState` inside Neovim, then `:DppInstall` if adding new repos.
+`nvim/toml/dein.toml`（起動時ロード）か `nvim/toml/dein_lazy.toml`（ファイルタイプでロード）を編集する。保存したら Neovim 内で `:DppMakeState` を実行し、リポジトリを追加した場合は続けて `:DppInstall` する。
 
-Removing a plugin from the TOML and regenerating the state drops it from the runtimepath, but its clone stays under `~/.cache/nvim/dpp/repos/github.com/`; delete that directory by hand to reclaim the space.
+TOML からプラグインを削除して状態を作り直せば runtimepath からは外れるが、clone 自体は `~/.cache/nvim/dpp/repos/github.com/` に残る。容量を戻すにはそのディレクトリを手で消すこと。
 
-State can also be regenerated without an interactive session, which is useful after editing the TOML files from a shell:
+状態は対話セッション無しでも作り直せる。シェルから TOML を編集した後に便利:
 
 ```sh
 nvim --headless -c 'autocmd User Dpp:makeStatePost qall!' \
   -c 'call dpp#make_state(stdpath("cache").."/dpp", stdpath("config").."/config.ts")'
 ```
 
-### Lua module layout
+### Lua モジュールの配置
 
 ```
 nvim/lua/
-  darkpowerd/   dpp.lua (bootstrap), ddu.lua (fuzzy finder config)
-  option/       option.lua (editor settings), cmd.lua, colorscheme.lua, cd.lua
-  keymap/       keymap.lua (leader mappings), yankround.lua
+  darkpowerd/   dpp.lua (ブートストラップ), ddu.lua (ファジーファインダの設定)
+  option/       option.lua (エディタ設定), cmd.lua, colorscheme.lua, cd.lua
+  keymap/       keymap.lua (leader マッピング), yankround.lua
   plugins/      lspconfig.lua, formatter.lua, nvim-tree.lua, autocmd.lua, claude_transcript.lua
 ```
 
-`init.lua` requires every module under `lua/`: `option/option`, `option/cd`, `darkpowerd/dpp`, `darkpowerd/ddu`, `keymap/keymap`, `keymap/yankround`, `plugins/lspconfig`, `plugins/formatter`, `plugins/nvim-tree`, `plugins/autocmd` and `plugins/claude_transcript`. Nothing is commented out any more. Note `init.lua` wraps everything in `if not vim.g.vscode`, so nothing loads under vscode-neovim.
+`init.lua` は `lua/` 以下のすべてのモジュールを require する: `option/option`, `option/cd`, `darkpowerd/dpp`, `darkpowerd/ddu`, `keymap/keymap`, `keymap/yankround`, `plugins/lspconfig`, `plugins/formatter`, `plugins/nvim-tree`, `plugins/autocmd`, `plugins/claude_transcript`。コメントアウトされたものはもう残っていない。なお `init.lua` は全体を `if not vim.g.vscode` で包んでいるので、vscode-neovim 下では何もロードされない。
 
-### Format-on-save
+### 保存時フォーマット
 
-`lua/plugins/autocmd.lua` registers a single `BufWritePost` → `:FormatWrite` autocmd inside the `format_on_save` augroup (`clear = true`, so `,r` re-sourcing `init.lua` cannot register duplicates). Its `pattern` is `"*"` on purpose: `lua/plugins/formatter.lua` is the single source of truth for which filetypes get formatted, and formatter.nvim returns early with "No formatter defined" for anything else.
+`lua/plugins/autocmd.lua` は `format_on_save` augroup（`clear = true` なので、`,r` で `init.lua` を読み直しても重複登録されない）の中に `BufWritePost` → `:FormatWrite` の autocmd をひとつだけ登録する。`pattern` が `"*"` なのは意図的で、どのファイルタイプをフォーマットするかの唯一の情報源は `lua/plugins/formatter.lua` である。それ以外については formatter.nvim が "No formatter defined" で早期に戻る。
 
-To suppress formatting for one buffer — useful in other people's repos, where these formatters will happily rewrite a whole file with their own defaults:
+特定のバッファだけフォーマットを抑止したいとき — 他人のリポジトリで有用。これらのフォーマッタは自分の既定値で平気でファイル全体を書き換えるので:
 
 ```vim
 :let b:formatter_skip_buf = v:true
 ```
 
-The external binaries come from mason. Re-create them on a fresh machine with:
+外部バイナリは mason から来る。新しいマシンでは次で入れ直す:
 
 ```
 :MasonInstall prettierd biome djlint mdformat yamlfix shfmt
 ```
 
-`clang-format` and `stylua` are pulled in as LSP/tooling dependencies already; `jq` comes from the system. mason prepends `~/.local/share/nvim/mason/bin` to `PATH`, so `vim.fn.jobstart` resolves all of them without extra configuration.
+`clang-format` と `stylua` は LSP/ツールの依存としてすでに入ってくる。`jq` はシステムのもの。mason が `~/.local/share/nvim/mason/bin` を `PATH` の先頭に足すので、`vim.fn.jobstart` は追加設定なしでこれらすべてを解決できる。
 
-Shell scripts (`setup.sh`, `.bashrc`, `.profile`, everything under `bin/`) all resolve to `filetype=sh`, so the single `sh` entry covers them; there is no `bash` filetype in play and `formatter.filetypes.bash` does not exist. shfmt runs with `-ci` because these scripts indent their `case` patterns (the Debian skeleton style) and shfmt flattens them to the `case` column without it. The tree was formatted once with `shfmt -w -ci -i 4`, so saving any of them should now produce no diff.
+シェルスクリプト（`setup.sh`, `.bashrc`, `.profile`, `bin/` 以下すべて）はいずれも `filetype=sh` に解決されるので、`sh` エントリひとつで足りる。`bash` というファイルタイプは登場せず、`formatter.filetypes.bash` は存在しない。shfmt を `-ci` 付きで走らせているのは、これらのスクリプトが `case` のパターンをインデントする（Debian スケルトンのスタイル）ためで、これが無いと shfmt は `case` の位置まで戻してしまう。ツリーは一度 `shfmt -w -ci -i 4` で整形済みなので、いま保存しても差分は出ないはず。
 
-Three traps worth remembering when editing `formatter.lua`:
+`formatter.lua` を編集するとき覚えておく価値のある罠が 3 つある。
 
-- `require("formatter.filetypes.<ft>").<tool>` returns `nil` when that module does not export the tool, and a table holding only `nil` counts as empty — the result is a silent "No formatter defined". `formatter.filetypes.html` has no `djlint` (only prettier variants and `tidy`), so html pulls it from `formatter.defaults` instead.
-- A formatter invoked with `stdin = true` must actually be told to read stdin. `mdformat` without a trailing `-` prints a warning to stderr and exits 0, which formatter.nvim reads as success and quietly does nothing.
-- `formatter.filetypes.sh.shfmt` passes `vim.opt.shiftwidth:get()` straight to `shfmt -i`. `option.lua` sets `shiftwidth = 0` (follow `tabstop`), so the builtin would emit `-i 0`, meaning tab indentation, in a config where `expandtab` is on. The `sh` entry therefore calls `vim.fn.shiftwidth()`, which resolves 0 to the effective width (4).
+- `require("formatter.filetypes.<ft>").<tool>` は、そのモジュールがツールを export していないと `nil` を返し、`nil` だけを持つテーブルは空とみなされる — 結果は無言の "No formatter defined"。`formatter.filetypes.html` には `djlint` が無い（prettier 系と `tidy` だけ）ので、html は代わりに `formatter.defaults` から引いている。
+- `stdin = true` で呼ぶフォーマッタには、実際に stdin を読ませる指定が要る。末尾の `-` を欠いた `mdformat` は警告を stderr に出して 0 で終了するため、formatter.nvim は成功と解釈し、黙って何もしない。
+- `formatter.filetypes.sh.shfmt` は `vim.opt.shiftwidth:get()` をそのまま `shfmt -i` に渡す。`option.lua` は `shiftwidth = 0`（`tabstop` に従う）を設定しているので、組み込みのままだと `-i 0`、つまりタブインデントを指示することになる — `expandtab` が有効な設定なのに。そのため `sh` エントリは `vim.fn.shiftwidth()` を呼び、0 を実効値 (4) に解決している。
 
-`logging = true` with `log_level = vim.log.levels.ERROR` keeps normal saves silent while still surfacing formatter failures; setting `logging = false` suppresses errors too (`log.lua:57-66`).
+`logging = true` と `log_level = vim.log.levels.ERROR` の組み合わせは、通常の保存を静かに保ちつつフォーマッタの失敗だけは表に出す。`logging = false` にするとエラーも抑止されてしまう (`log.lua:57-66`)。
 
-`nvim/.stylua.toml` pins `column_width = 160` so the long single-line `vim.keymap.set(...)` calls in `keymap.lua` survive stylua's default 120-column wrapping.
+`nvim/.stylua.toml` は `column_width = 160` を固定している。`keymap.lua` の長い 1 行 `vim.keymap.set(...)` を、stylua の既定 120 桁の折り返しから守るため。
 
-### Filer (nvim-tree)
+### ファイラ (nvim-tree)
 
-nvim-tree is the only file explorer. `lua/plugins/nvim-tree.lua` disables netrw, shows dotfiles, and uses a 30-column drawer; icons come from `nvim-web-devicons`. `,uj` toggles it, revealing the current file when the buffer holds a real file.
+ファイルエクスプローラは nvim-tree ひとつだけ。`lua/plugins/nvim-tree.lua` は netrw を無効化し、ドットファイルを表示し、30 桁のドロワーを使う。アイコンは `nvim-web-devicons` から来る。`,uj` でトグルし、バッファが実ファイルなら現在のファイルの位置を開いて見せる。
 
-fern.vim (plus nerdfont.vim, fern-renderer-nerdfont.vim and glyph-palette.vim) was removed in favour of nvim-tree, because `claudecode.nvim` dispatches on filetype and only supports `NvimTree`, `neo-tree`, `oil`, `minifiles`, `netrw` and `snacks_picker_list` — `,at` (`ClaudeCodeTreeAdd`) could never work from a fern buffer.
+fern.vim（および nerdfont.vim, fern-renderer-nerdfont.vim, glyph-palette.vim）は nvim-tree に置き換えて削除した。`claudecode.nvim` はファイルタイプで分岐しており、対応しているのは `NvimTree`, `neo-tree`, `oil`, `minifiles`, `netrw`, `snacks_picker_list` だけなので、fern のバッファからは `,at` (`ClaudeCodeTreeAdd`) が原理的に動かなかったため。
 
-### Fuzzy finder (ddu.vim)
+### アイコンフォント（Nerd フォント）
 
-`lua/darkpowerd/ddu.lua` configures the ddu fuzzy finder using `,u` as a prefix: `,uc` file_rec, `,uf` file, `,ub` buffers, `,um` MRU, `,ur` registers, `,up` file_point, `,un` new file, `,ul` colorscheme. It sets a floating ff UI with automatic preview and devicon converters, and binds `<CR>` / `q` / `<Space>` / `i` / `P` inside `ddu-ff` buffers.
+**Neovim 側にフォントの設定は存在しない。** TUI の nvim は字形を端末エミュレータから受け取るだけで、`guifont` はこのリポジトリのどこにも無い（GUI クライアントの neovide / nvim-qt も使っていない）。したがって設定する場所は端末側しかない。
 
-`keymap.lua` also maps `,u` itself to `<Nop>`, which coexists with the longer mappings — pressing `,u` alone just waits out `timeoutlen` and does nothing. Note `init.lua` loads `darkpowerd/ddu` before `keymap/keymap`, so `,uj` and `,ug` from the latter sit alongside ddu's mappings rather than replacing them.
+Nerd フォントの私用領域 (PUA) を要求しているのは 4 か所:
 
-ddu accounts for 16 of the 35 plugin entries in `dein.toml` — each source, filter and kind is its own repository. `fall.vim` is also installed but has no config; it and `snacks.nvim`'s picker (already present as a claudecode.nvim dependency) are the alternatives if that count ever becomes a problem.
+- `nvim-web-devicons` — nvim-tree のファイルアイコン (`dein.toml`)
+- `ddu-filter-converter_devicon` — `ddu.lua` が `sourceOptions._` の `converters` に入れているので、ddu の一覧すべて
+- lightline の `separator` / `subseparator`（`\ue0b0`–`\ue0b3`、`dein.toml` の hook）
+- snacks.nvim / claudecode.nvim の UI
 
-### Keymaps (`lua/keymap/keymap.lua`)
+端末側の状況は 2 つで異なる。
 
-| Mapping | Action |
+- **Windows Terminal** は Ubuntu プロファイルで `"face": "JetBrainsMono Nerd Font"` を名指ししている (`windows/windows-terminal/settings.json`)。フォント本体が無ければ黙って別のフォントへフォールバックし、上の 4 つがすべて豆腐になる。新しいマシンでこれを入れるのが `README.md` の手順 1。
+- **wezterm** は face を名指ししていない。`windows/wezterm/wezterm.lua` にあるのは `font_size` だけで、同梱の JetBrains Mono（Nerd Font ビルドではない方）が使われる。それでも崩れないのは、wezterm が *Symbols Nerd Font Mono* を実行ファイルに内蔵していて PUA をそこへフォールバックさせるため。powerline セパレータに至ってはフォントを引かず、`custom_block_glyphs` で自前描画する。
+
+つまり Nerd フォントのインストールは Windows Terminal の要件であって、wezterm の要件ではない。どちらで解決されたのかは推測せず wezterm に聞けばよい:
+
+```sh
+'/mnt/c/Program Files/WezTerm/wezterm.exe' ls-fonts --text $'\ue0b0\uf07b'
+```
+
+`<built-in>, BuiltIn` と出れば内蔵フォールバック、ファイルパスが出れば OS にインストールされたフォント。`wezterm.lua` に `config.font` を足せばこの暗黙の依存は消えるが、その代わり wezterm 側にも Nerd フォントのインストールが必須になる。
+
+Linux 側にフォントは要らない。fontconfig すら入っていない (`fc-list` が無い)。
+
+### ファジーファインダ (ddu.vim)
+
+`lua/darkpowerd/ddu.lua` は `,u` をプレフィックスとして ddu ファジーファインダを設定する: `,uc` file_rec, `,uf` file, `,ub` buffers, `,um` MRU, `,ur` registers, `,up` file_point, `,un` 新規ファイル, `,ul` colorscheme。フローティングの ff UI に自動プレビューと devicon コンバータを設定し、`ddu-ff` バッファ内で `<CR>` / `q` / `<Space>` / `i` / `P` を割り当てる。
+
+`keymap.lua` は `,u` 自体も `<Nop>` にマップしているが、これは長い方のマッピングと共存する — `,u` だけを押すと `timeoutlen` を待って何も起きない。なお `init.lua` は `darkpowerd/ddu` を `keymap/keymap` より先にロードするので、後者の `,uj` と `,ug` は ddu のマッピングを置き換えるのではなく並んで存在する。
+
+ddu は `dein.toml` の 35 エントリのうち 16 を占める — source も filter も kind もそれぞれ別リポジトリだから。`fall.vim` もインストールされているが設定は無い。この数がいつか問題になったときの代替は、これと（claudecode.nvim の依存としてすでに入っている）`snacks.nvim` のピッカーである。
+
+### キーマップ (`lua/keymap/keymap.lua`)
+
+| マッピング | 動作 |
 |---|---|
-| `,r` | Re-source `init.lua` |
-| `,uj` | Toggle nvim-tree (reveals current file) |
+| `,r` | `init.lua` を読み直す |
+| `,uj` | nvim-tree をトグル（現在のファイルを開いて見せる） |
 | `,ug` | `:LazyGit` |
-| `,ac` / `,af` | Claude Code toggle / focus |
-| `,ar` / `,ak` | Resume Claude session (`--resume`, picker) / continue the latest one (`--continue`) |
-| `,ab` / `,at` | Add current buffer / file under tree cursor to Claude |
-| `,al` | `:ClaudeLog` — read back the Claude pane's scrollback (`lua/plugins/claude_transcript.lua`) |
-| `,as` (visual) | Send selection to Claude |
-| `<Space>cd` | `:CD` — `lcd` to the current file's directory (`lua/option/cd.lua`) |
-| `p` / `P` | Paste through yankround |
-| `<C-p>` / `<C-n>` | Cycle backwards / forwards through the yank history (`lua/keymap/yankround.lua`) |
+| `,ac` / `,af` | Claude Code のトグル / フォーカス |
+| `,ar` / `,ak` | Claude セッションの再開（`--resume`、ピッカー） / 直近のものを継続（`--continue`） |
+| `,ab` / `,at` | 現在のバッファ / ツリーのカーソル位置のファイルを Claude に追加 |
+| `,al` | `:ClaudeLog` — Claude ペインのスクロールバックを読み返す (`lua/plugins/claude_transcript.lua`) |
+| `,as` (ビジュアル) | 選択範囲を Claude へ送る |
+| `<Space>cd` | `:CD` — 現在のファイルのディレクトリへ `lcd` (`lua/option/cd.lua`) |
+| `p` / `P` | yankround 経由のペースト |
+| `<C-p>` / `<C-n>` | yank 履歴を前 / 後ろへ巡回 (`lua/keymap/yankround.lua`) |
 
-`<C-p>` and `<C-n>` have no default *mapping*, but they are default *motions* (up/down a line, like `k`/`j`); yankround takes them over in normal mode. Insert-mode completion is untouched, since `yankround.lua` only maps normal mode. Note that `plugin/yankround.vim` records the yank history whether or not these mappings exist, so the history already had entries before they were enabled.
+`<C-p>` と `<C-n>` に既定の *マッピング* は無いが、既定の *モーション*（`k`/`j` と同じく上下 1 行）ではある。yankround がノーマルモードでこれを乗っ取る。`yankround.lua` はノーマルモードしかマップしないので、挿入モードの補完には手を付けない。なお `plugin/yankround.vim` はこれらのマッピングの有無にかかわらず yank 履歴を記録しているので、有効化する前から履歴にはすでにエントリがあった。
 
-`:ClaudeCode` takes `nargs = "*"` and appends whatever it is given to the `claude` binary (`terminal.lua:356`), so any CLI flag can be bound this way. Sessions are stored per working directory under `~/.claude/projects/<slugified-cwd>/`; `git_repo_cwd = true` in the `dein.toml` hook makes the terminal spawn at the git root (`terminal.lua:263-266`), so history is shared no matter which subdirectory Neovim was started from. All three of `,ac` / `,af` / `,ar` are toggles — arguments only take effect when the terminal is actually being spawned, so pressing them while it is open just hides the window.
+`:ClaudeCode` は `nargs = "*"` を取り、与えられたものを `claude` バイナリにそのまま渡す (`terminal.lua:356`) ので、どの CLI フラグでもこの方式で割り当てられる。セッションは作業ディレクトリごとに `~/.claude/projects/<slugified-cwd>/` へ保存される。`dein.toml` の hook にある `git_repo_cwd = true` がターミナルを git のルートで起動させる (`terminal.lua:263-266`) ので、Neovim をどのサブディレクトリで起動しても履歴は共有される。`,ac` / `,af` / `,ar` の 3 つはいずれもトグルで、引数が効くのはターミナルが実際に起動されるときだけ。開いている状態で押せば単にウィンドウが隠れる。
 
-**`claudecode.setup()` silently discards misplaced keys.** `split_side`, `split_width_percentage`, `git_repo_cwd`, `auto_close`, `auto_insert` and `snacks_win_opts` all belong inside `terminal = { ... }`; `track_selection`, `diff_opts`, `terminal_cmd`, `env` and `models` are top-level. `config.lua` validates only the keys it knows about, and `init.lua` forwards nothing but `opts.terminal` to the terminal module, so a key at the wrong depth produces no warning — the default just quietly applies. All three of the split options had been sitting at the top level, which is why the pane used the 0.30 default instead of the 0.35 written in the hook. To check what actually took effect:
+**`claudecode.setup()` は置き場所を間違えたキーを黙って捨てる。** `split_side`, `split_width_percentage`, `git_repo_cwd`, `auto_close`, `auto_insert`, `snacks_win_opts` はすべて `terminal = { ... }` の中に属し、`track_selection`, `diff_opts`, `terminal_cmd`, `env`, `models` はトップレベルに属する。`config.lua` は自分の知っているキーしか検証せず、`init.lua` はターミナルモジュールへ `opts.terminal` しか渡さないので、階層を間違えたキーは警告も出ずに既定値が静かに適用される。split 系 3 つはいずれもトップレベルに置かれていて、それがペインの幅が hook に書かれた 0.35 ではなく既定の 0.30 になっていた理由だった。実際に何が効いているかの確認:
 
 ```vim
 :lua print(vim.inspect(require("claudecode").state.config.terminal))
 ```
 
-### Reading back the Claude pane (`:ClaudeLog`, `,al`)
+### Claude ペインの読み返し (`:ClaudeLog`, `,al`)
 
-**The Claude Code pane has no scrollback in nvim's sense.** It emits `ESC[?1049h` at startup, so it runs on the alternate screen: the terminal buffer only ever holds the frame currently on display. `<C-\><C-n>` followed by `k` therefore has nothing above it to reach, and this is structural, not a misconfiguration — `,ug` (LazyGit) behaves the same way.
+**Claude Code のペインには、nvim の意味でのスクロールバックが無い。** 起動時に `ESC[?1049h` を出すので代替スクリーン上で動いており、ターミナルバッファはいま表示されているフレームしか保持しない。したがって `<C-\><C-n>` の後に `k` を押しても遡る先が無い。これは設定ミスではなく構造的なもので、`,ug` (LazyGit) も同じ挙動になる。
 
-Claude Code also enables mouse reporting (`ESC[?1000h`, `?1002h`, `?1003h`, `?1006h`), so nvim forwards wheel events to it rather than scrolling the buffer. That happens regardless of `'mouse'`, but with `mouse = ""` (which `option.lua` sets) nvim never asks the outer terminal to report the wheel in the first place, so nothing arrives to forward.
+Claude Code はマウスレポート (`ESC[?1000h`, `?1002h`, `?1003h`, `?1006h`) も有効にするので、nvim はホイールイベントをバッファのスクロールではなく Claude へ転送する。これは `'mouse'` の値に関係なく起きるが、`option.lua` が設定している `mouse = ""` では、そもそも nvim が外側の端末にホイールの報告を要求しないので、転送すべきものが届かない。
 
-`lua/plugins/claude_transcript.lua` reads the conversation off disk instead. Sessions live at `~/.claude/projects/<slugified-cwd>/<session-uuid>.jsonl`, one JSON object per line:
+`lua/plugins/claude_transcript.lua` は代わりに会話をディスクから読む。セッションは `~/.claude/projects/<slugified-cwd>/<session-uuid>.jsonl` にあり、1 行 1 JSON オブジェクトである。
 
-- The slug is the directory Claude started in with every non-alphanumeric character replaced by `-`, so `/home/mituzawa/dotfiles` becomes `-home-mituzawa-dotfiles`. It resolves the **git root**, since `git_repo_cwd = true` is what the terminal spawns at.
-- The current session is just the most recently modified `.jsonl` in that directory; `--resume` and `--continue` keep appending to the file they reopened.
-- `:ClaudeLog` renders `user` and `assistant` records into a markdown scratch buffer in a new tab and lands on the last line. `:ClaudeLog!` opens the raw `.jsonl` instead. Both are opened `modifiable = false` + `readonly = true` — the raw one especially, since it is a real file that the running session is still appending to.
+- slug は Claude が起動したディレクトリの英数字以外をすべて `-` に置き換えたもので、`/home/mituzawa/dotfiles` は `-home-mituzawa-dotfiles` になる。解決するのは **git のルート**。ターミナルがそこで起動されるのは `git_repo_cwd = true` のため。
+- 現在のセッションは、そのディレクトリで最後に更新された `.jsonl` にすぎない。`--resume` と `--continue` は開き直したファイルに追記し続ける。
+- `:ClaudeLog` は `user` と `assistant` のレコードを markdown のスクラッチバッファへ新しいタブでレンダリングし、最終行に着地する。`:ClaudeLog!` は生の `.jsonl` を開く。どちらも `modifiable = false` + `readonly = true` で開く — 特に生の方は、実行中のセッションがいまも追記している実ファイルなので。
 
-Two things the format forces:
+このフォーマットが強いてくることが 2 つある。
 
-- `thinking` blocks are stored with the text stripped — only `signature` survives — so they are skipped rather than rendered as empty markers.
-- Truncation of tool arguments and results counts characters via `strcharpart`, not bytes. `string.sub` cuts multibyte characters in half, and the resulting invalid UTF-8 is enough to make GNU grep stop matching the buffer's text.
+- `thinking` ブロックはテキストが取り除かれた状態で保存され、残るのは `signature` だけなので、空のマーカーとしてレンダリングするのではなくスキップする。
+- ツールの引数と結果の切り詰めは、バイトではなく `strcharpart` で文字数を数える。`string.sub` はマルチバイト文字を途中で切ってしまい、その結果できる不正な UTF-8 は GNU grep がバッファのテキストにマッチしなくなるには十分である。
 
 ### LSP
 
-`lua/plugins/lspconfig.lua` sets up mason.nvim + mason-lspconfig for automatic LSP server installation, enabling `lua_ls`, `vimls`, `clangd`, `rust_analyzer`, `bashls` and `pyright` through `automatic_enable`.
+`lua/plugins/lspconfig.lua` は mason.nvim + mason-lspconfig をセットアップして LSP サーバの自動インストールを有効にし、`automatic_enable` を通じて `lua_ls`, `vimls`, `clangd`, `rust_analyzer`, `bashls`, `pyright` を有効化する。
 
-**No LSP keymaps are defined here.** Neovim 0.11+ ships its own and they are what actually take effect: `grn` rename, `gra` code action, `grr` references, `gri` implementation, `grt` type definition, `grx` codelens, `gO` document symbol, `[d` / `]d` diagnostic jumps, `K` hover (buffer-local on attach), and goto-definition through `tagfunc` on `<C-]>`.
+**ここで LSP のキーマップは定義していない。** Neovim 0.11+ が自前のものを持っており、実際に効くのはそちら: `grn` rename, `gra` code action, `grr` references, `gri` implementation, `grt` type definition, `grx` codelens, `gO` document symbol, `[d` / `]d` 診断のジャンプ, `K` hover（attach 時にバッファローカル）、そして `tagfunc` 経由の `<C-]>` による定義ジャンプ。
 
-An `on_attach` function defining `gd` / `K` / `<C-m>` / `gy` / `rn` / `ma` / `gr` / `<space>e` / `[d` / `]d` used to sit at the top of the file, but nothing ever passed it anywhere — `automatic_enable` has no hook for it — so it was dead code. It was removed rather than wired up because wiring it would have meant rewriting it: three of its ten mappings called `vim.lsp.diagnostic.show_line_diagnostics` / `goto_prev` / `goto_next`, which no longer exist (that functionality moved to `vim.diagnostic.jump`); `[d` and `]d` would have replaced working built-ins with errors; and none of the `vim.keymap.set` calls passed `{ buffer = bufnr }`, so they would have leaked into every buffer including ones with no LSP attached.
+`gd` / `K` / `<C-m>` / `gy` / `rn` / `ma` / `gr` / `<space>e` / `[d` / `]d` を定義する `on_attach` 関数がかつてファイル冒頭にあったが、これをどこにも渡していなかった — `automatic_enable` にそのためのフックは無い — ので、単なるデッドコードだった。配線するのではなく削除したのは、配線するなら書き直しが必要だったから。10 個のマッピングのうち 3 つが `vim.lsp.diagnostic.show_line_diagnostics` / `goto_prev` / `goto_next` を呼んでいたが、これらはもう存在しない（機能は `vim.diagnostic.jump` へ移った）。`[d` と `]d` は動いている組み込みをエラーで置き換えることになる。そして `vim.keymap.set` のどの呼び出しも `{ buffer = bufnr }` を渡していないので、LSP が attach していないものも含め全バッファへ漏れ出す。
 
-If per-server behaviour is ever needed, `vim.lsp.config('*', { on_attach = ... })` is the hook to use.
+サーバごとの挙動がいつか必要になったときは、`vim.lsp.config('*', { on_attach = ... })` が使うべきフックである。
 
-`nvim/.luarc.json` configures lua_ls (LuaJIT runtime, `vim` global, `$VIMRUNTIME/lua` library). It only applies when `~/.config/nvim` is the workspace root — editing these files from the dotfiles repo root produces spurious `Undefined global vim` warnings.
+`nvim/.luarc.json` は lua_ls の設定（LuaJIT ランタイム、`vim` グローバル、`$VIMRUNTIME/lua` ライブラリ）。効くのは `~/.config/nvim` がワークスペースのルートのときだけで、dotfiles リポジトリのルートからこれらのファイルを編集すると `Undefined global vim` の偽警告が出る。
 
-## Shell / bin scripts
+## シェル / bin スクリプト
 
-Scripts in `bin/` are standalone shell utilities (QEMU/TPM setup, buildroot helpers, SSH shortcuts, etc.). No build step required.
+`bin/` のスクリプトは単体で動くシェルユーティリティ（QEMU/TPM のセットアップ、buildroot のヘルパ、SSH のショートカットなど）。ビルド手順は不要。
 
-### Login shell (`.profile`)
+### ログインシェル (`.profile`)
 
-`.profile` sources `.bashrc` first, then does nothing but build `PATH`. Entries go through `_path_add`, which appends each existing directory to `_path_head`; that whole string is prepended to the inherited `PATH` in one step at the end. **The list therefore reads in the same order as the resulting `PATH`** — highest priority first:
+`.profile` はまず `.bashrc` を source し、あとは `PATH` を組み立てるだけである。各エントリは `_path_add` を通り、存在するディレクトリだけが `_path_head` に追記される。その文字列全体が最後に一度だけ、継承した `PATH` の前に付く。**したがってリストは結果の `PATH` と同じ順序で読める** — 優先度の高いものが先:
 
-| Priority | Path | Holds |
+| 優先度 | パス | 内容 |
 |---|---|---|
-| 1 | `~/bin` | this repo's `bin/`, symlinked by `setup.sh` |
-| 2 | `~/.local/bin` | pip / user-local installs |
-| 3 | `~/go/bin` | `go install` output |
+| 1 | `~/bin` | このリポジトリの `bin/`。`setup.sh` がリンクする |
+| 2 | `~/.local/bin` | pip / ユーザローカルのインストール |
+| 3 | `~/go/bin` | `go install` の出力 |
 | 4 | `~/github/wasm-micro-runtime/product-mini/platforms/linux/build` | `iwasm` |
 | 5 | `$WASMTIME_HOME/bin` | wasmtime |
 | 6 | `/opt/nvim-linux-x86_64/bin` | Neovim |
 
-A new entry goes at the position it should occupy — no mental inversion. This replaced seven `if [ -d X ]; then PATH="Y:$PATH"; fi` blocks, where the last block written won and adding one at the bottom silently gave it the *highest* precedence.
+新しいエントリは、占めるべき位置にそのまま書く — 頭の中で反転させる必要はない。これは `if [ -d X ]; then PATH="Y:$PATH"; fi` のブロック 7 つを置き換えたもので、以前は最後に書いたブロックが勝ち、末尾に足すと黙って *最高* の優先度になっていた。
 
-`_path_add` also tests the directory it is about to add, so the two cannot drift apart. `unset -f _path_add` and `unset _path_head` at the end keep the helper out of the resulting shell.
+`_path_add` は追加しようとするディレクトリの存在確認も行うので、両者が食い違うことがない。末尾の `unset -f _path_add` と `unset _path_head` が、ヘルパを結果のシェルに残さない。
 
-`~/.cargo/bin` and `~/.deno/bin` are outside this list and stay below everything in it. `~/.cargo/env` and `~/.deno/env` are generated by rustup and deno, they prepend on their own, and `.bashrc` sources them before `.profile` reaches the list — putting them in `_path_add` would only duplicate the entries.
+`~/.cargo/bin` と `~/.deno/bin` はこのリストの外にあり、リスト内のすべてより下に来る。`~/.cargo/env` と `~/.deno/env` は rustup と deno が生成するもので、自前で前に足す。しかも `.bashrc` が `.profile` のリストより前にそれらを source するので、`_path_add` に入れてもエントリが重複するだけである。
 
-`bin/clean-wsl-path.sh` is sourced last and must stay last. It splits `PATH` on `:` and rebuilds it with empty entries and entries containing spaces dropped, which is what keeps WSL's injected `C:\Program Files\...` paths out. Anything appended after it escapes the filter.
+`bin/clean-wsl-path.sh` は最後に source され、最後のままでなければならない。これは `PATH` を `:` で分割し、空のエントリと空白を含むエントリを落として組み直す — WSL が注入する `C:\Program Files\...` を締め出しているのはこれである。この後に追記したものはフィルタを逃れる。
 
-The space filter is not cosmetic: Buildroot's `support/dependencies/dependencies.sh` aborts outright when `PATH` contains a space, so the `~/github/keystone` build (`build-generic64/buildroot.build`) cannot run without it.
+空白のフィルタは見た目の問題ではない。Buildroot の `support/dependencies/dependencies.sh` は `PATH` に空白が含まれると即座に中断するので、これが無いと `~/github/keystone` のビルド (`build-generic64/buildroot.build`) が走らない。
 
-The wasmtime entry is the one that cannot be written plainly. `WASMTIME_HOME` is exported by its own `-d "$HOME/.wasmtime"` block above the list, and the list references it as `${WASMTIME_HOME:+$WASMTIME_HOME/bin}` so an unset value expands to the empty string, which `_path_add` skips. A bare `"$WASMTIME_HOME/bin"` would expand to `/bin` instead — a directory that exists, so it would silently join the list.
+wasmtime のエントリだけは素直に書けない。`WASMTIME_HOME` はリストの上にある専用の `-d "$HOME/.wasmtime"` ブロックで export され、リストからは `${WASMTIME_HOME:+$WASMTIME_HOME/bin}` として参照される。未設定なら空文字列に展開され、`_path_add` がそれをスキップするからである。素の `"$WASMTIME_HOME/bin"` だと代わりに `/bin` — 存在するディレクトリ — に展開され、黙ってリストに加わってしまう。
 
-That is not hypothetical. The export used to live in `.bashrc` while `.profile` tested `-d $HOME/.wasmtime` and expanded `$WASMTIME_HOME`; since `.bashrc` returns early in a non-interactive shell, `bash -lc`, `ssh host cmd` and cron all got the empty expansion and prepended `/bin` (`/usr/bin` under merged-usr) into the list. Nothing was actually shadowed. `WASMTIME_HOME` is unset in a non-login interactive shell, which is correct: that shell does not get the `PATH` entry either.
+これは仮定の話ではない。export はかつて `.bashrc` にあり、`.profile` は `-d $HOME/.wasmtime` を判定して `$WASMTIME_HOME` を展開していた。`.bashrc` は非対話シェルで早期に return するので、`bash -lc`、`ssh host cmd`、cron はいずれも空の展開を受け取り、`/bin`（merged-usr 下では `/usr/bin`）をリストへ前置していた。実際に何かが隠されたわけではない。`WASMTIME_HOME` は非ログインの対話シェルでは未設定だが、それは正しい — そのシェルは `PATH` エントリの方も受け取らないのだから。
 
-### The WASI SDK is deliberately not on `PATH`
+### WASI SDK は意図的に `PATH` へ載せない
 
-`.profile` exports `WASI_SDK_PATH=$HOME/images/wasi-sdk-33.0-x86_64-linux` and stops there — the SDK's `bin/` used to sit at priority 5, ahead of `/usr/bin`, and that shadowed the host toolchain:
+`.profile` は `WASI_SDK_PATH=$HOME/images/wasi-sdk-33.0-x86_64-linux` を export するだけで止めている。SDK の `bin/` はかつて優先度 5、つまり `/usr/bin` より前にあり、ホストのツールチェーンを隠していた。
 
-- `clang` and `clang++` resolved to the SDK's clang-22, whose `bin/clang.cfg` pins the target to `wasm32-unknown-wasip1` and points at the bundled wasi-sysroot. `clang hello.c` produced a WebAssembly module, silently, where `/usr/bin/clang` (Ubuntu 18.1.3, x86_64) would have produced an ELF binary.
-- `ar`, `nm`, `objcopy`, `objdump`, `ranlib`, `size`, `strings`, `strip` and `c++filt` are symlinks to the `llvm-*` tools. Those do handle ELF, so nothing broke outright, but their flags and output differ from GNU binutils — which matters for Buildroot, and therefore for the Keystone build.
+- `clang` と `clang++` が SDK の clang-22 に解決されていた。その `bin/clang.cfg` はターゲットを `wasm32-unknown-wasip1` に固定し、同梱の wasi-sysroot を指す。`clang hello.c` は、`/usr/bin/clang`（Ubuntu 18.1.3, x86_64）なら ELF バイナリを作る場面で、黙って WebAssembly モジュールを吐いていた。
+- `ar`, `nm`, `objcopy`, `objdump`, `ranlib`, `size`, `strings`, `strip`, `c++filt` は `llvm-*` ツールへのシンボリックリンクである。これらは ELF も扱えるので露骨には壊れないが、フラグと出力が GNU binutils と異なる — Buildroot にとっては、ひいては Keystone のビルドにとっては問題になる。
 
-Build systems read `WASI_SDK_PATH` (the CMake toolchain file included with the SDK does). Anything else should spell out `$WASI_SDK_PATH/bin/clang`. The uniquely named tools — `llvm-*`, `clang-22` — went off `PATH` along with the rest, so they need the same prefix.
+ビルドシステムは `WASI_SDK_PATH` を読む（SDK 同梱の CMake ツールチェーンファイルがそうしている）。それ以外は `$WASI_SDK_PATH/bin/clang` と明示的に書くべきである。名前が衝突しないツール — `llvm-*`, `clang-22` — も他と一緒に `PATH` から外れたので、同じ接頭辞が要る。
 
-`bin/wasm-ld` is the exception, a shim for the one that gets typed by hand. It falls back to the install path when `WASI_SDK_PATH` is unset, which is the case in a non-login shell since `.profile` is what exports it. It execs `$WASI_SDK_PATH/bin/wasm-ld` rather than `lld` on purpose: that file is a symlink to `lld`, and LLD picks its driver from `argv[0]`, so the name is what selects the wasm linker over `ld.lld` or `lld-link`.
+`bin/wasm-ld` は例外で、手で打たれる唯一のものに対するシムである。`WASI_SDK_PATH` が未設定のときはインストールパスにフォールバックする。非ログインシェルではそれを export する `.profile` が走らないので、この状況は実際に起きる。`lld` ではなく `$WASI_SDK_PATH/bin/wasm-ld` を exec しているのは意図的で、そのファイルは `lld` へのシンボリックリンクであり、LLD は `argv[0]` からドライバを選ぶ — つまり `ld.lld` や `lld-link` ではなく wasm リンカを選ばせているのは名前である。
 
-Everything still on the list is collision-free against `/usr/bin`: `~/.local/bin` wins `docutils` and the `rst2*` scripts from the apt package, which is the point of a pip user install, and the wamr build directory holds only `iwasm` and `test_wrgsbase`.
+リストに残っているものはいずれも `/usr/bin` と衝突しない。`~/.local/bin` は apt パッケージに対して `docutils` と `rst2*` スクリプトを勝ち取るが、それこそが pip のユーザインストールの目的である。wamr のビルドディレクトリには `iwasm` と `test_wrgsbase` しか無い。
 
-Note that mason's `~/.local/share/nvim/mason/bin` is not here — Neovim prepends that itself, which is why the formatter binaries resolve inside nvim but not in a plain shell.
+なお mason の `~/.local/share/nvim/mason/bin` はここに無い。Neovim が自分で前置するからであり、フォーマッタのバイナリが nvim の中では解決できて素のシェルでは解決できないのはそのためである。
 
-### Launching VS Code (`bin/code`)
+### VS Code の起動 (`bin/code`)
 
-The space filter's one casualty is VS Code, whose launcher lives in `/mnt/c/Users/<user>/AppData/Local/Programs/Microsoft VS Code/bin`. `bin/code` exists to get it back without weakening the filter: `~/bin` has no spaces, so it survives, and the shim calls the real launcher by absolute path.
+空白フィルタの唯一の犠牲者が VS Code で、そのランチャは `/mnt/c/Users/<user>/AppData/Local/Programs/Microsoft VS Code/bin` にある。`bin/code` はフィルタを緩めずにこれを取り戻すために存在する。`~/bin` には空白が無いので生き残り、シムが本物のランチャを絶対パスで呼ぶ。
 
-There are two launchers and they are not interchangeable:
+ランチャは 2 つあり、互換ではない。
 
-- `~/.vscode-server/bin/<commit>/bin/remote-cli/code` hands its arguments to an already attached window over `$VSCODE_IPC_HOOK_CLI`, and errors out when that variable is unset.
-- The Windows-side wrapper starts a window (or reuses one) from scratch. It finds its own install with `realpath "$0"` and reaches Windows through `/usr/bin/wslpath`, a Linux binary — so nothing has to be on `PATH` for it to work.
+- `~/.vscode-server/bin/<commit>/bin/remote-cli/code` は、`$VSCODE_IPC_HOOK_CLI` 越しに、すでに接続済みのウィンドウへ引数を渡す。この変数が未設定だとエラーになる。
+- Windows 側のラッパーは、ウィンドウを一から起動する（あるいは既存のものを再利用する）。`realpath "$0"` で自身のインストール先を見つけ、Linux バイナリである `/usr/bin/wslpath` を通じて Windows に到達する — したがって動作のために `PATH` に何かが載っている必要はない。
 
-The shim branches on `$VSCODE_IPC_HOOK_CLI` rather than leaving the choice to `PATH` order, because VS Code puts the remote-cli directory on `PATH` for its integrated terminal but `.profile` prepends `~/bin` afterwards, so the shim wins there too. Both the user install (`AppData/Local/Programs`) and the system install (`/mnt/c/Program Files`) are probed, so re-installing VS Code the other way does not break it.
+シムが `PATH` の順序に選択を委ねず `$VSCODE_IPC_HOOK_CLI` で分岐しているのは、VS Code が統合ターミナル用に remote-cli のディレクトリを `PATH` へ入れる一方、`.profile` がその後で `~/bin` を前置するので、そこでもシムが勝ってしまうからである。ユーザインストール (`AppData/Local/Programs`) とシステムインストール (`/mnt/c/Program Files`) の両方を探すので、VS Code をもう一方の方式で入れ直しても壊れない。
 
-Two alternatives were rejected. Stripping `PATH` only around the Keystone build inverts the safe default and assumes Buildroot is the only thing that minds. `appendWindowsPath=false` in `/etc/wsl.conf` stops the injection at the source, but the VS Code path contains a space either way, so it would still need re-adding by hand — and `explorer.exe`, `clip.exe` and friends would then need it too.
+代替案は 2 つ検討して却下した。Keystone のビルドの前後だけ `PATH` を削るのは、安全な既定を逆転させたうえで、気にするのは Buildroot だけだと仮定することになる。`/etc/wsl.conf` の `appendWindowsPath=false` は注入そのものを止めるが、VS Code のパスにはどのみち空白が含まれるので手で足し直す必要が残り、さらに `explorer.exe` や `clip.exe` などにも同じ手当てが要る。
 
-### Interactive shell (`.bashrc`)
+### 対話シェル (`.bashrc`)
 
-Lines 1-91 are the stock Debian skeleton (non-interactive early return, `histappend`, `checkwinsize`, lesspipe, `PS1`, dircolors and the `--color=auto` aliases) with one edit: `HISTSIZE` / `HISTFILESIZE` were raised from 1000 / 2000 to 10000 / 20000, keeping the skeleton's 1:2 ratio, so fzf's `CTRL-R` has something to search. Everything below that is local: `BROWSER=wslview`, the eight `KEYSTONE*` / `BUILDROOT_BUILDDIR` exports, a `uname -m` case that sets `TZ` only on riscv64 hardware, `view='nvim -R'`, conditional sourcing of `~/.bash_aliases`, bash-completion, the fzf block and `~/.cargo/env` / `~/.deno/env`, and the ssh-agent block below.
+1-91 行目は Debian スケルトンそのまま（非対話での早期 return、`histappend`、`checkwinsize`、lesspipe、`PS1`、dircolors と `--color=auto` のエイリアス群）で、変更は 1 か所だけ: `HISTSIZE` / `HISTFILESIZE` を 1000 / 2000 から 10000 / 20000 へ引き上げ、スケルトンの 1:2 の比率は保った。fzf の `CTRL-R` に検索対象を与えるため。それより下はすべてローカル: `BROWSER=wslview`、8 つの `KEYSTONE*` / `BUILDROOT_BUILDDIR` の export、riscv64 の実機でのみ `TZ` を設定する `uname -m` の case、`view='nvim -R'`、`~/.bash_aliases`・bash-completion・fzf ブロック・`~/.cargo/env` / `~/.deno/env` の条件付き source、そして下記の ssh-agent ブロック。
 
-The early return at the top means none of this reaches a non-interactive shell. Claude Code still sees these variables because its environment is captured from the profile once at session start.
+冒頭の早期 return により、これらはどれも非対話シェルには届かない。Claude Code にこれらの変数が見えているのは、その環境がセッション開始時にプロファイルから一度取り込まれるからである。
 
 ### fzf
 
-fzf is the apt package (`/usr/bin/fzf`, 0.44). Its configuration is in `.bashrc` rather than `.profile`, which does nothing but build `PATH` — `/usr/bin` is already on it, and both integration scripts return early in a non-interactive shell anyway.
+fzf は apt パッケージ (`/usr/bin/fzf`, 0.44)。設定は `.profile` ではなく `.bashrc` にある。`.profile` は `PATH` を組み立てるだけであり、`/usr/bin` はすでにそこに載っているし、統合スクリプトはどちらも非対話シェルでは早期に return するからである。
 
-| Key | Action |
+| キー | 動作 |
 |---|---|
-| `CTRL-T` | Insert a path at the cursor (preview in the right 60%) |
-| `CTRL-R` | Search command history (`?` toggles a full-text preview of the selection) |
-| `ALT-C` | `cd` into a subdirectory (`ls` preview) |
-| `**<TAB>` | Complete anywhere — `vim **<TAB>`, `kill **<TAB>`, `ssh **<TAB>` |
-| `cd **<TAB>` | Directories only — same for `pushd` and `rmdir` |
+| `CTRL-T` | カーソル位置にパスを挿入（右 60% にプレビュー） |
+| `CTRL-R` | コマンド履歴を検索（`?` で選択項目の全文プレビューをトグル） |
+| `ALT-C` | サブディレクトリへ `cd`（`ls` のプレビュー） |
+| `**<TAB>` | どこでも補完 — `vim **<TAB>`, `kill **<TAB>`, `ssh **<TAB>` |
+| `cd **<TAB>` | ディレクトリのみ — `pushd` と `rmdir` も同様 |
 
-0.44 predates `fzf --bash` (0.48), so the two integration files are sourced by path. They are not in the same place: key bindings ship as `/usr/share/doc/fzf/examples/key-bindings.bash`, but Debian installs the completion as `/usr/share/bash-completion/completions/fzf` — there is no `examples/completion.bash`, only the zsh one. Both are guarded with `-f` so the block survives fzf being uninstalled.
+0.44 は `fzf --bash` (0.48) より前なので、2 つの統合ファイルはパス指定で source する。両者は同じ場所には無い。キーバインドは `/usr/share/doc/fzf/examples/key-bindings.bash` として配布されるが、Debian は補完を `/usr/share/bash-completion/completions/fzf` に置く — `examples/completion.bash` は存在せず、あるのは zsh 用だけである。どちらも `-f` でガードしてあるので、fzf をアンインストールしてもブロックは生き残る。
 
-Two ordering traps:
+順序に関する罠が 2 つ。
 
-- The completion has to be sourced **after** the bash-completion block above it, because it wraps whatever completions are already installed.
-- It has to be sourced **explicitly**, not left to bash-completion's lazy loader. The loader keys on the command name, so it would only fire on `fzf<TAB>` — the `**` trigger for every *other* command would never be installed.
+- 補完はその上の bash-completion ブロックの **後** に source しなければならない。すでに入っている補完をラップするため。
+- 補完は bash-completion の遅延ローダに任せず **明示的に** source しなければならない。ローダはコマンド名をキーにするので `fzf<TAB>` でしか発火せず、*他の* あらゆるコマンドに対する `**` トリガが決してインストールされないことになる。
 
-File listing goes through **fdfind** (the Debian/Ubuntu name for `fd`) instead of the bundled `find` walk, which is what skips `.gitignore` matches. `--hidden --follow` put back the dotfiles and symlinks `find` would have listed, and `--exclude .git` stops `--hidden` from dumping the object store.
+ファイル一覧は、同梱の `find` による走査ではなく **fdfind**（`fd` の Debian/Ubuntu での名前）を通す。`.gitignore` にマッチするものを飛ばすのはこれである。`--hidden --follow` は、`find` なら列挙していたドットファイルとシンボリックリンクを戻し、`--exclude .git` は `--hidden` がオブジェクトストアを吐き出すのを止める。
 
-`FZF_CTRL_T_COMMAND` and `FZF_ALT_C_COMMAND` cover the key bindings, but the `**` trigger reads neither — it calls the `_fzf_compgen_path` / `_fzf_compgen_dir` hooks, which `completion.bash` defines only if they do not already exist, so the block defines them first. Their bodies spell the `fdfind` invocation out instead of interpolating a shared variable: function bodies expand at call time, so such a variable would have to stay set in every interactive shell for the hooks to keep working.
+`FZF_CTRL_T_COMMAND` と `FZF_ALT_C_COMMAND` はキーバインドを賄うが、`**` トリガはどちらも読まない。`_fzf_compgen_path` / `_fzf_compgen_dir` フックを呼ぶのであり、`completion.bash` はそれらがまだ存在しない場合にのみ定義するので、ブロックの側で先に定義している。その本体が共有変数を展開せず `fdfind` の呼び出しを直接書き下しているのは、関数本体は呼び出し時に展開されるため、そのような変数がすべての対話シェルで設定されたままでなければフックが動かなくなるからである。
 
-`cd` needs no configuration — `completion.bash` routes `cd`, `pushd` and `rmdir` through `_fzf_dir_completion` by default (`FZF_COMPLETION_DIR_COMMANDS` overrides the list). It does need one fix, though: fd prints a directory with a trailing `/` and `_fzf_dir_completion` appends a `/` of its own, so `_fzf_compgen_dir` pipes through `sed 's|/$||'` to keep `cd **<TAB>` from inserting `./nvim//`. `_fzf_compgen_path` deliberately keeps fd's slash — `_fzf_path_completion` appends nothing, and its `-o nospace` then lets a second `**` keep descending from the directory just accepted.
+`cd` には設定が要らない — `completion.bash` は既定で `cd`, `pushd`, `rmdir` を `_fzf_dir_completion` に通す（一覧は `FZF_COMPLETION_DIR_COMMANDS` で上書きできる）。ただし修正が 1 つ要る: fd はディレクトリを末尾 `/` 付きで出力し、`_fzf_dir_completion` はさらに `/` を足すので、`cd **<TAB>` が `./nvim//` を挿入しないよう `_fzf_compgen_dir` は `sed 's|/$||'` に通している。`_fzf_compgen_path` の方は fd のスラッシュを意図的に残す — `_fzf_path_completion` は何も足さず、その `-o nospace` によって、受理した直後のディレクトリから 2 度目の `**` で降りていけるからである。
 
-Everything is gated on `command -v fzf`, and the fdfind-specific half on `command -v fdfind`, so the block degrades to fzf's built-in `find` behaviour rather than breaking on a machine with only one of them.
+すべてが `command -v fzf` で、fdfind 固有の部分はさらに `command -v fdfind` でガードされているので、どちらか一方しか無いマシンでは壊れるのではなく fzf 組み込みの `find` の挙動に落ちる。
 
-### ssh-agent and the git remote
+### ssh-agent と git remote
 
-`origin` is `git@github.com:mituzawa/dotfiles.git`, and `~/.ssh/config` points github.com at `~/.ssh/id_ed25519`, **which has a passphrase** (`id_ed25519_nopass` exists but is scoped to two LAN hosts). Claude Code's shell has no TTY, so it cannot answer `Enter passphrase for key ...:` — a push would hang or fail rather than prompt.
+`origin` は `git@github.com:mituzawa/dotfiles.git` で、`~/.ssh/config` は github.com を `~/.ssh/id_ed25519` に向けている。**この鍵にはパスフレーズがある**（`id_ed25519_nopass` も存在するが、LAN 内の 2 ホスト専用）。Claude Code のシェルには TTY が無いので `Enter passphrase for key ...:` に答えられない — push はプロンプトを出す代わりにハングするか失敗する。
 
-`.bashrc` works around this by pinning the agent socket to a fixed path so one agent serves every shell:
+`.bashrc` はエージェントのソケットを固定パスに固定し、1 つのエージェントですべてのシェルを賄うことでこれを回避している:
 
 ```sh
 export SSH_AUTH_SOCK="$HOME/.ssh/agent.sock"
@@ -265,30 +291,30 @@ if [ $? -eq 2 ]; then
 fi
 ```
 
-The passphrase is then typed once per WSL boot, in an interactive terminal:
+パスフレーズは WSL の起動ごとに 1 回、対話端末で入力する:
 
 ```sh
 ssh-add ~/.ssh/id_ed25519
 ```
 
-Two things about that snippet are load-bearing:
+このスニペットで効いているものが 2 つある。
 
-- The spawn is gated on `ssh-add -l` exiting **2**, not on it merely being non-zero. Exit 2 means no agent answered; exit **1** means an agent is running but holds no keys yet. Writing `if ! ssh-add -l` would therefore discard a live agent every time a new shell opened before the first `ssh-add`.
-- The default socket path (`/tmp/ssh-XXXXXX/agent.<pid>`) changes on every agent restart, which is why it is pinned. Without that, the socket has to be hunted down with `ls /tmp/ssh-*/agent.*` before every push.
+- 起動の条件は `ssh-add -l` が単に非ゼロで終わることではなく、終了コード **2** であること。2 は応答したエージェントが無いことを意味し、**1** はエージェントは動いているがまだ鍵を持っていないことを意味する。`if ! ssh-add -l` と書くと、最初の `ssh-add` より前に新しいシェルが開かれるたびに、生きているエージェントを捨ててしまう。
+- 既定のソケットパス (`/tmp/ssh-XXXXXX/agent.<pid>`) はエージェントを起動し直すたびに変わる。固定しているのはそのため。固定しないと、push のたびに `ls /tmp/ssh-*/agent.*` でソケットを探し回ることになる。
 
-Claude Code takes its environment from the profile once, at session start, so a session older than the `.bashrc` change will not have `SSH_AUTH_SOCK` set. Prefixing the command works without restarting:
+Claude Code は環境をセッション開始時にプロファイルから一度だけ取り込むので、`.bashrc` の変更より古いセッションには `SSH_AUTH_SOCK` が設定されていない。再起動せずとも、コマンドの前に付ければ動く:
 
 ```sh
 SSH_AUTH_SOCK=~/.ssh/agent.sock git push
 ```
 
-Verify auth without pushing anything with `ssh -T git@github.com`, which answers `Hi mituzawa! You've successfully authenticated, but GitHub does not provide shell access.`
+何も push せずに認証だけ確認するなら `ssh -T git@github.com`。`Hi mituzawa! You've successfully authenticated, but GitHub does not provide shell access.` と返る。
 
-## Windows-side configuration (`windows/`, `bin/win-sync.sh`)
+## Windows 側の設定 (`windows/`, `bin/win-sync.sh`)
 
-`setup.sh` only ever links into `$HOME`, so the files under `windows/` are handled separately, by `bin/win-sync.sh`. `bin` is already one of `setup.sh`'s `TARGETS`, so the script arrives on `PATH` as `~/bin/win-sync.sh` with no change to the target list.
+`setup.sh` は `$HOME` へリンクを張ることしかしないので、`windows/` 以下のファイルは別扱いで `bin/win-sync.sh` が処理する。`bin` はすでに `setup.sh` の `TARGETS` に入っているので、このスクリプトは `TARGETS` を変えることなく `~/bin/win-sync.sh` として `PATH` に載る。
 
-| `windows/` | Destination |
+| `windows/` | コピー先 |
 |---|---|
 | `.wslconfig` | `%USERPROFILE%\.wslconfig` |
 | `wezterm/wezterm.lua`, `wezterm/keybinds.lua` | `%USERPROFILE%\.config\wezterm\` |
@@ -296,39 +322,39 @@ Verify auth without pushing anything with `ssh -T git@github.com`, which answers
 | `windows-terminal/settings.json` | `%LOCALAPPDATA%\Packages\Microsoft.WindowsTerminal_*\LocalState\settings.json` |
 
 ```sh
-win-sync.sh diff [name ...]   # what differs (default, read-only)
-win-sync.sh pull [name ...]   # Windows -> repository
-win-sync.sh push [name ...]   # repository -> Windows
+win-sync.sh diff [name ...]   # 差分の表示（既定、読み取り専用）
+win-sync.sh pull [name ...]   # Windows -> リポジトリ
+win-sync.sh push [name ...]   # リポジトリ -> Windows
 ```
 
-`<name>` is a path under `windows/`; an unknown one is rejected with the list of known targets rather than silently doing nothing.
+`<name>` は `windows/` 以下のパス。未知の名前は、黙って何もしないのではなく、既知のターゲット一覧とともに拒否される。
 
-### These targets are copied, not symlinked
+### これらのターゲットはコピーであってシンボリックリンクではない
 
-Symlinking is what `setup.sh` does on the Linux side, and it is the wrong tool here for two independent reasons:
+シンボリックリンクは Linux 側で `setup.sh` がやっていることだが、ここでは道具として間違っている。理由は独立に 2 つある。
 
-- **`.wslconfig` is read before the distribution starts.** It configures the VM that `\\wsl.localhost\<distro>\...` lives inside, so a link pointing there could never be followed — a chicken-and-egg problem, not a permissions one. (Developer Mode is on, `AllowDevelopmentWithoutDevLicense = 1`, so creating links without elevation does work.)
-- **Windows Terminal and VS Code rewrite their own settings** whenever the GUI is used, and Windows applications generally write a temp file and rename it over the destination. That replaces a symlink with a real file, so the link breaks silently the first time a checkbox is ticked.
+- **`.wslconfig` はディストリビューションが起動する前に読まれる。** これは `\\wsl.localhost\<distro>\...` が内側に存在する VM を設定するものなので、そこを指すリンクは原理的に辿れない — 権限の問題ではなく鶏と卵の問題である。（開発者モードは有効で `AllowDevelopmentWithoutDevLicense = 1` なので、昇格なしでリンクを作ること自体はできる。）
+- **Windows Terminal と VS Code は GUI が使われるたびに自分の設定を書き換える。** そして Windows のアプリケーションは一般に、一時ファイルを書いてコピー先へリネームする。これはシンボリックリンクを実体ファイルで置き換えるので、チェックボックスを 1 つ触った時点でリンクが黙って壊れる。
 
-Copying makes "the application changed its settings" a case the tool handles — `pull` — instead of a failure mode. `push` backs the destination up as `<name>_ORG` first, the same convention `setup.sh` uses, and keeps the first backup if one already exists.
+コピーにすることで、「アプリケーションが設定を変えた」が障害モードではなくツールが扱うケース — `pull` — になる。`push` はコピー先を先に `<name>_ORG` として退避する。これは `setup.sh` と同じ慣習で、既にバックアップがあれば最初のものを保つ。
 
-That backup only earns its keep when pushing onto a machine whose settings were never pulled. After a `pull` the same content is already in git, so the `_ORG` is redundant and should be deleted — the same call `723361f` made for the checked-in distro skeletons. None of the three applications load a `*_ORG` sitting next to their config, so leaving one behind is untidy rather than dangerous.
+このバックアップが役に立つのは、一度も pull していないマシンへ push するときだけである。`pull` の後は同じ内容がすでに git にあるので `_ORG` は冗長であり、削除すべきである — チェックイン済みのディストリのスケルトンについて `723361f` が下したのと同じ判断。3 つのアプリケーションはいずれも設定の隣にある `*_ORG` を読まないので、放置しても危険ではなく、単に散らかるだけではある。
 
-### Line endings
+### 改行コード
 
-The three applications do not agree: Windows Terminal writes LF, VS Code and wezterm write CRLF, and `.wslconfig` was CRLF on the Windows side while the repository copy was LF. **The repository keeps LF throughout** — `pull` runs the Windows file through `sed 's/\r$//'`, and `diff` normalises both sides before comparing, so a save on the Windows side shows up as the lines that actually changed rather than as a whole-file diff. `push` writes LF, which all four readers accept.
+3 つのアプリケーションで一致していない。Windows Terminal は LF を書き、VS Code と wezterm は CRLF を書き、`.wslconfig` は Windows 側が CRLF でリポジトリのコピーは LF だった。**リポジトリは全体を LF に保つ** — `pull` は Windows のファイルを `sed 's/\r$//'` に通し、`diff` は比較の前に両側を正規化するので、Windows 側での保存はファイル全体の差分ではなく実際に変わった行として現れる。`push` は LF を書き、4 つの読み手はいずれもそれを受け付ける。
 
-`.gitattributes` (`* text=auto eol=lf`) keeps a future clone on the Windows side from checking these out as CRLF. Nothing already committed is renormalised by it: the only tracked file that is not LF in the worktree is `.luarc.json`, and that is a symlink.
+`.gitattributes` (`* text=auto eol=lf`) は、将来 Windows 側で clone したときにこれらが CRLF でチェックアウトされるのを防ぐ。これによって既存のコミットが再正規化されることはない。ワークツリーで LF でない唯一の追跡ファイルは `.luarc.json` で、それはシンボリックリンクである。
 
-### Two details in the script
+### スクリプト内の 2 つの細部
 
-- `~/bin` is a symlink to this repository's `bin/`, so `$0` has to be resolved with `readlink -f`. `setup.sh`'s `cd "$(dirname "$0")" && pwd` would land in `$HOME`, because bash's `cd` keeps the logical path.
-- The Windows Terminal package directory is named after the build (Store, Preview, unpackaged), so it is resolved with a `Microsoft.WindowsTerminal*` glob. When nothing matches, that one target is dropped with a `SKIP` line and the rest still run.
+- `~/bin` はこのリポジトリの `bin/` へのシンボリックリンクなので、`$0` は `readlink -f` で解決する必要がある。`setup.sh` の `cd "$(dirname "$0")" && pwd` だと `$HOME` に着いてしまう。bash の `cd` が論理パスを保つためである。
+- Windows Terminal のパッケージディレクトリはビルド（Store、Preview、非パッケージ）ごとに名前が違うので、`Microsoft.WindowsTerminal*` のグロブで解決する。何にもマッチしなければ、そのターゲットだけ `SKIP` 行を出して落とし、残りは実行される。
 
-### Deliberately not synced
+### 意図的に同期しないもの
 
-`~/.ssh` and the Windows-side `.claude/` (which holds `.credentials.json`) are secrets. `/etc/wsl.conf` is a Linux-side file inside the distribution, not a Windows one. The PowerShell profile, VS Code's `keybindings.json` and VS Code's `snippets/` do not exist yet, and there is no winget package export.
+`~/.ssh` と Windows 側の `.claude/`（`.credentials.json` を含む）は秘密情報。`/etc/wsl.conf` はディストリビューション内部の Linux 側ファイルであって Windows のものではない。PowerShell のプロファイル、VS Code の `keybindings.json`、VS Code の `snippets/` はまだ存在せず、winget のパッケージエクスポートも無い。
 
-### The drift this was built for
+### これが作られた理由となったドリフト
 
-`windows/.wslconfig` was committed in `57f7453` and then reached nothing — it was never in `TARGETS`, and there was no other mechanism. By the time `win-sync.sh` was written the repository asked for 16GB / 8 processors / 32GB swap while `C:\Users\mituz\.wslconfig` said 8GB / 4 / 2GB, and the running WSL had 4 CPUs and 7.8GB: the committed values had never once been applied. The initial `pull` took the live values as the truth.
+`windows/.wslconfig` は `57f7453` でコミットされたが、その後どこにも届いていなかった — `TARGETS` に入っておらず、他の仕組みも無かった。`win-sync.sh` を書いた時点で、リポジトリは 16GB / 8 プロセッサ / 32GB swap を要求していたのに `C:\Users\mituz\.wslconfig` は 8GB / 4 / 2GB と書いてあり、動作中の WSL は 4 CPU と 7.8GB だった。コミットされた値は一度も適用されたことがなかったのである。最初の `pull` では、動作中の値の方を正とした。
