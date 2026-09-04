@@ -1,0 +1,32 @@
+{
+    "github.copilot.nextEditSuggestions.enabled": true,
+    "security.allowedUNCHosts": [
+        "wsl.localhost"
+    ],
+    "latex-workshop.latex.tools": [
+    { 
+        "name": "latexmk-uplatex-tool",
+        "command": "latexmk",
+        "args": [
+            "-outdir=%OUTDIR%",
+            "%DOC%"
+        ],
+    },],
+
+    "latex-workshop.latex.recipes": [
+    {
+        "name": "latexmk for uplatex",
+        "tools": [
+            "latexmk-uplatex-tool"
+        ],
+    },
+],
+"workbench.colorTheme": "Dark Modern",
+"vscode-neovim.useWSL": true,
+"vscode-neovim.neovimExecutablePaths.linux": "/opt/nvim-linux-x86_64/bin/nvim",
+"extensions.experimental.affinity": {
+    "asvetliakov.vscode-neovim": 1
+},
+"workbench.editor.empty.hint": "hidden",
+"claudeCode.preferredLocation": "panel"
+}

@@ -8,6 +8,8 @@ Personal dotfiles for a Linux/WSL2 environment. The Neovim config is the most st
 
 The dotfiles are deployed by symlinking into the home directory via `setup.sh`, which reads the `TARGETS` list (`.bashrc`, `.profile`, `.gitconfig`, `.clang-format`, `.vimrc`, `.vim`, `bin`, `nvim:.config/nvim`) and backs up any pre-existing real file as `<name>_ORG`. `~/.config/nvim/` corresponds to `nvim/` in this repo (e.g. `~/.config/nvim/toml/` → `dotfiles/nvim/toml/`).
 
+`windows/` is outside all of that: those files belong on the Windows side of WSL, cannot be symlinked there, and are copied by `bin/win-sync.sh` instead. See [Windows-side configuration](#windows-side-configuration-windows-binwin-syncsh).
+
 ## Neovim configuration architecture
 
 The plugin stack is built on two layers:
@@ -279,3 +281,50 @@ SSH_AUTH_SOCK=~/.ssh/agent.sock git push
 ```
 
 Verify auth without pushing anything with `ssh -T git@github.com`, which answers `Hi mituzawa! You've successfully authenticated, but GitHub does not provide shell access.`
+
+## Windows-side configuration (`windows/`, `bin/win-sync.sh`)
+
+`setup.sh` only ever links into `$HOME`, so the files under `windows/` are handled separately, by `bin/win-sync.sh`. `bin` is already one of `setup.sh`'s `TARGETS`, so the script arrives on `PATH` as `~/bin/win-sync.sh` with no change to the target list.
+
+| `windows/` | Destination |
+|---|---|
+| `.wslconfig` | `%USERPROFILE%\.wslconfig` |
+| `wezterm/wezterm.lua`, `wezterm/keybinds.lua` | `%USERPROFILE%\.config\wezterm\` |
+| `vscode/settings.json` | `%APPDATA%\Code\User\settings.json` |
+| `windows-terminal/settings.json` | `%LOCALAPPDATA%\Packages\Microsoft.WindowsTerminal_*\LocalState\settings.json` |
+
+```sh
+win-sync.sh diff [name ...]   # what differs (default, read-only)
+win-sync.sh pull [name ...]   # Windows -> repository
+win-sync.sh push [name ...]   # repository -> Windows
+```
+
+`<name>` is a path under `windows/`; an unknown one is rejected with the list of known targets rather than silently doing nothing.
+
+### These targets are copied, not symlinked
+
+Symlinking is what `setup.sh` does on the Linux side, and it is the wrong tool here for two independent reasons:
+
+- **`.wslconfig` is read before the distribution starts.** It configures the VM that `\\wsl.localhost\<distro>\...` lives inside, so a link pointing there could never be followed — a chicken-and-egg problem, not a permissions one. (Developer Mode is on, `AllowDevelopmentWithoutDevLicense = 1`, so creating links without elevation does work.)
+- **Windows Terminal and VS Code rewrite their own settings** whenever the GUI is used, and Windows applications generally write a temp file and rename it over the destination. That replaces a symlink with a real file, so the link breaks silently the first time a checkbox is ticked.
+
+Copying makes "the application changed its settings" a case the tool handles — `pull` — instead of a failure mode. `push` backs the destination up as `<name>_ORG` first, the same convention `setup.sh` uses, and keeps the first backup if one already exists.
+
+### Line endings
+
+The three applications do not agree: Windows Terminal writes LF, VS Code and wezterm write CRLF, and `.wslconfig` was CRLF on the Windows side while the repository copy was LF. **The repository keeps LF throughout** — `pull` runs the Windows file through `sed 's/\r$//'`, and `diff` normalises both sides before comparing, so a save on the Windows side shows up as the lines that actually changed rather than as a whole-file diff. `push` writes LF, which all four readers accept.
+
+`.gitattributes` (`* text=auto eol=lf`) keeps a future clone on the Windows side from checking these out as CRLF. Nothing already committed is renormalised by it: the only tracked file that is not LF in the worktree is `.luarc.json`, and that is a symlink.
+
+### Two details in the script
+
+- `~/bin` is a symlink to this repository's `bin/`, so `$0` has to be resolved with `readlink -f`. `setup.sh`'s `cd "$(dirname "$0")" && pwd` would land in `$HOME`, because bash's `cd` keeps the logical path.
+- The Windows Terminal package directory is named after the build (Store, Preview, unpackaged), so it is resolved with a `Microsoft.WindowsTerminal*` glob. When nothing matches, that one target is dropped with a `SKIP` line and the rest still run.
+
+### Deliberately not synced
+
+`~/.ssh` and the Windows-side `.claude/` (which holds `.credentials.json`) are secrets. `/etc/wsl.conf` is a Linux-side file inside the distribution, not a Windows one. The PowerShell profile, VS Code's `keybindings.json` and VS Code's `snippets/` do not exist yet, and there is no winget package export.
+
+### The drift this was built for
+
+`windows/.wslconfig` was committed in `57f7453` and then reached nothing — it was never in `TARGETS`, and there was no other mechanism. By the time `win-sync.sh` was written the repository asked for 16GB / 8 processors / 32GB swap while `C:\Users\mituz\.wslconfig` said 8GB / 4 / 2GB, and the running WSL had 4 CPUs and 7.8GB: the committed values had never once been applied. The initial `pull` took the live values as the truth.
