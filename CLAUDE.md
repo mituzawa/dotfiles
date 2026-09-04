@@ -310,6 +310,8 @@ Symlinking is what `setup.sh` does on the Linux side, and it is the wrong tool h
 
 Copying makes "the application changed its settings" a case the tool handles — `pull` — instead of a failure mode. `push` backs the destination up as `<name>_ORG` first, the same convention `setup.sh` uses, and keeps the first backup if one already exists.
 
+That backup only earns its keep when pushing onto a machine whose settings were never pulled. After a `pull` the same content is already in git, so the `_ORG` is redundant and should be deleted — the same call `723361f` made for the checked-in distro skeletons. None of the three applications load a `*_ORG` sitting next to their config, so leaving one behind is untidy rather than dangerous.
+
 ### Line endings
 
 The three applications do not agree: Windows Terminal writes LF, VS Code and wezterm write CRLF, and `.wslconfig` was CRLF on the Windows side while the repository copy was LF. **The repository keeps LF throughout** — `pull` runs the Windows file through `sed 's/\r$//'`, and `diff` normalises both sides before comparing, so a save on the Windows side shows up as the lines that actually changed rather than as a whole-file diff. `push` writes LF, which all four readers accept.
