@@ -4,6 +4,8 @@ Linux/WSL2 環境の個人用 dotfiles。bash、Neovim、`bin/` 以下のシェ�
 
 *なぜ* そうなっているのかは `CLAUDE.md` を参照 — `PATH` の順序、fzf と ssh-agent のブロック、Neovim のプラグイン構成、保存時フォーマットの落とし穴。このファイルが扱うのは、新しいマシンを動く状態に戻す手順だけ。
 
+公開しているが個人用の設定であり、共同編集はしていない。clone と参照は自由に。push 権限を持つのは所有者だけなので、気づいたことがあれば Issue へ。
+
 | | |
 |---|---|
 | `.bashrc`, `.profile`, `.gitconfig`, `.clang-format`, `.vimrc`, `.vim` | `setup.sh` が `$HOME` へリンクする |
