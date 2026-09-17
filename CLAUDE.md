@@ -310,6 +310,43 @@ SSH_AUTH_SOCK=~/.ssh/agent.sock git push
 
 何も push せずに認証だけ確認するなら `ssh -T git@github.com`。`Hi mituzawa! You've successfully authenticated, but GitHub does not provide shell access.` と返る。
 
+## リモートの保護 (GitHub ruleset)
+
+リポジトリは public だが、public が配っているのは read 権限だけで write ではない。collaborator は所有者ひとり、招待中のものも deploy key も fork も無い。URL を知っただけの相手にできるのは clone / fork / PR の作成までで、PR はマージしない限りリポジトリには入らない。実際に push できるのは、アカウントに登録済みの SSH 鍵の **秘密鍵側** を読めるマシンだけである。鍵はリポジトリ単位ではなくアカウント全体の権限なので、1 本で public リポジトリすべてに届く。
+
+そのうえで ruleset `protect-default-branch`（ID `17347446`）が `master` を守っている。
+
+| ルール | 効果 |
+|---|---|
+| `deletion` | `master` の削除を拒否する |
+| `non_fast_forward` | `master` への force-push を拒否する |
+
+`bypass_actors` は空で `current_user_can_bypass` は `never` — **所有者も例外ではない**。これは意図したもので、この ruleset が実際に防いでいるのは第三者よりもまず自分の操作ミスである。通常の fast-forward push はこれまでどおり通る。
+
+その代償として、rebase や amend の後の force-push も拒否される。必要なときは一時的に無効化して戻す:
+
+```sh
+gh api -X PUT repos/mituzawa/dotfiles/rulesets/17347446 -f enforcement=disabled
+SSH_AUTH_SOCK=~/.ssh/agent.sock git push --force-with-lease origin master
+gh api -X PUT repos/mituzawa/dotfiles/rulesets/17347446 -f enforcement=active
+```
+
+**`pull_request` ルールは意図的に入れていない。** ruleset にはもともと approve 1 名必須の `pull_request` が含まれていて、それが `enforcement: disabled` のまま放置されていた理由でもある — `bypass_actors` が空のままこれを有効化すると、GitHub は自分の PR を self-approve できないので、ソロ運用では `master` へマージする手段が無くなる。入れるとしたら `required_approving_review_count` を 0 にするか、bypass に自分を入れるかのどちらかが要る。
+
+なお GitHub の SSH 鍵は git 操作専用で、API にも Web UI にも使えない。したがって万一どこかの秘密鍵が漏れた場合、`pull_request` ルールは実際に効く多層防御になる — 鍵を持つ相手はブランチを push できても、PR を作ることもマージすることもできないからである。現在それを入れていないのは、その前提が無いからにすぎない。
+
+現在の状態は次で読める。`https://github.com/mituzawa/dotfiles/rules/17347446` でも同じものが見える:
+
+```sh
+gh api repos/mituzawa/dotfiles/rulesets/17347446 \
+  --jq '{enforcement, rules:[.rules[].type], bypass:.bypass_actors}'
+gh api repos/mituzawa/dotfiles/branches/master --jq .protected   # → true
+```
+
+force-push と削除が実際に拒否されるかを `git push --delete origin master` で試してはいけない。ruleset の適用に失敗していた場合、それは拒否ではなく `master` の削除として成立する。API の読み取りで確かめること。
+
+**ruleset はリポジトリの設定であってファイルではない。** `.github/` には何も無く、clone からは復元されない。新しいマシンでの復元手順には関係ないが（`README.md` の手順はどれもこれに触れない）、リポジトリを作り直したときは手で入れ直すことになる。`README.md` 冒頭にある「共同編集はしていない、気づいたことは Issue へ」の一段落も同じ経緯で足したもので、URL を渡された相手が clone に push 権限が付いてくると誤解するのを先に潰している。
+
 ## Windows 側の設定 (`windows/`, `bin/win-sync.sh`)
 
 `setup.sh` は `$HOME` へリンクを張ることしかしないので、`windows/` 以下のファイルは別扱いで `bin/win-sync.sh` が処理する。`bin` はすでに `setup.sh` の `TARGETS` に入っているので、このスクリプトは `TARGETS` を変えることなく `~/bin/win-sync.sh` として `PATH` に載る。
