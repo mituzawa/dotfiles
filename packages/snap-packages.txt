@@ -1,0 +1,2 @@
+chromium latest/stable
+ubuntu-desktop-installer latest/edge classic

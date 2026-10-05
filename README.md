@@ -12,13 +12,14 @@ Linux/WSL2 環境の個人用 dotfiles。bash、Neovim、`bin/` 以下のシェ�
 | `bin/` | `~/bin` としてリンクされ、`PATH` の先頭に来る |
 | `nvim/` | `~/.config/nvim` としてリンクされる |
 | `windows/` | `bin/win-sync.sh` が Windows 側へコピーする |
+| `packages/` | apt / snap / pipx / npm のパッケージ一覧。`bin/pkg-sync.sh` が書き出し、適用する |
 | `etc/` | 参照用のコピー。配置は手作業 |
 
 ## 新しいマシンでの復元
 
 ### 1. Windows 側
 
-WSL2 + Ubuntu 24.04。何よりも先に **JetBrainsMono Nerd Font** を Windows にインストールすること。Windows Terminal の Ubuntu プロファイルがこの face を名指ししており、無いと Windows Terminal は黙ってフォールバックし、nvim-web-devicons も ddu の `converter_devicon` も lightline の powerline セパレータも軒並み豆腐になる。wezterm は任意 — 何もこれに依存していない — だが設定は `windows/` にあり、手順 8 で復元される。
+WSL2 + Ubuntu 24.04。何よりも先に **JetBrainsMono Nerd Font** を Windows にインストールすること。Windows Terminal の Ubuntu プロファイルがこの face を名指ししており、無いと Windows Terminal は黙ってフォールバックし、nvim-web-devicons も ddu の `converter_devicon` も lightline の powerline セパレータも軒並み豆腐になる。wezterm は任意 — 何もこれに依存していない — だが設定は `windows/` にあり、手順 9 で復元される。
 
 wezterm は face を名指し **していない**。`windows/wezterm/wezterm.lua` が設定しているのは `font_size` だけで、同梱の JetBrains Mono（Nerd Font ビルドではない方）を使う。それでも字形が欠けないのは、wezterm が *Symbols Nerd Font Mono* を実行ファイルに内蔵していて私用領域をそこへフォールバックさせ、powerline セパレータは `custom_block_glyphs` で自前描画するため。実際にどのフォントで解決されたかは次で確認できる。
 
@@ -48,11 +49,27 @@ cd ~/dotfiles
 exec bash -l
 ```
 
-HTTPS なのは意図的。SSH の remote には、このリポジトリに意図的に含めていない鍵が要る。remote の切り替えは手順 7 で行う。
+HTTPS なのは意図的。SSH の remote には、このリポジトリに意図的に含めていない鍵が要る。remote の切り替えは手順 8 で行う。
 
 `setup.sh` は `TARGETS` リストの各項目を `$HOME` へシンボリックリンクし、既存の **実体** ファイルは `<name>_ORG` として退避する（新規インストールではディストリのスケルトンがそこに落ちる。シェルが期待どおりになったら削除してよい）。`exec bash -l` が `.profile` に `PATH` を組み直させ、それによって `~/bin` が他のすべてより前に来る。
 
-### 4. Neovim
+### 4. パッケージの一括復元
+
+手順 2 は clone に要る最小限にすぎない。手で入れてきた残りは `packages/` に記録してある。
+
+```sh
+pkg-sync.sh diff     # 読み取り専用: 未インストール (-) と未記録 (+) の一覧
+pkg-sync.sh apply    # 未インストールのものだけ入れる (apt -> snap -> pip -> npm)
+```
+
+- `apt` は Candidate の無いパッケージを `SKIP` して残りを入れる。`google-chrome-stable` と `tailscale` はサードパーティの apt リポジトリ由来なので、入れたければ先にそれぞれの source を足してから再実行する。
+- `texlive-full` を含むので、初回の apt は長くかかる。
+- `pip-packages.txt` の中身は pipx のアプリ。Node.js と pipx は apt リストから入るので、順序はスクリプトが守る。
+- `apply` は追加しかしない。リストに無いものを消すことはない。
+
+旧マシン側では、事前に `pkg-sync.sh dump` してコミットしておくこと。
+
+### 5. Neovim
 
 ```sh
 curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
@@ -61,7 +78,7 @@ sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz
 
 `.profile` が Neovim 用に足すパスは `/opt/nvim-linux-x86_64/bin` ひとつだけなので、別の場所ではなくそこへ入れること。`view='nvim -R'` のエイリアスは、そのエントリが存在して初めて有効になる。
 
-### 5. Deno
+### 6. Deno
 
 ```sh
 curl -fsSL https://deno.land/install.sh | sh
@@ -69,7 +86,7 @@ curl -fsSL https://deno.land/install.sh | sh
 
 任意ではない。プラグインマネージャ (dpp.vim) は `nvim/config.ts` を denops.vim 経由で走らせ、その実体は Deno プロセスである。`deno` が `PATH` に無ければプラグインの状態は生成されず、何もロードされない。インストーラは `~/.deno/env` を書き、それを `.bashrc` が source する。
 
-### 6. Neovim の初回起動
+### 7. Neovim の初回起動
 
 `lua/darkpowerd/dpp.lua` が dpp.vim・denops.vim・5 つの dpp 拡張を `~/.cache/nvim/dpp/repos/github.com/` へ自力で clone するので、初回の `nvim` は遅く、状態キャッシュができるまではエラーを出すこともある。その後、Neovim の中で:
 
@@ -93,7 +110,7 @@ nvim --headless -c 'autocmd User Dpp:makeStatePost qall!' \
   -c 'call dpp#make_state(stdpath("cache").."/dpp", stdpath("config").."/config.ts")'
 ```
 
-### 7. SSH 鍵と git remote
+### 8. SSH 鍵と git remote
 
 ```sh
 ssh-keygen -t ed25519 -C mituzawa@gmail.com
@@ -121,7 +138,7 @@ ssh -T git@github.com    # Hi mituzawa! You've successfully authenticated, ...
 ssh-add ~/.ssh/id_ed25519
 ```
 
-### 8. Windows 側の設定
+### 9. Windows 側の設定
 
 ```sh
 win-sync.sh diff    # 読み取り専用: 新マシンの内容とこのリポジトリの差分
@@ -132,7 +149,7 @@ win-sync.sh push    # リポジトリ -> Windows
 
 `.wslconfig` は PowerShell から `wsl --shutdown` するまで効かない。値はこのマシンのもの — 8GB / 4 プロセッサ / 2GB swap — なので、shutdown する前に新しいホストに見合うか確認すること。
 
-### 9. 任意の追加物
+### 10. 任意の追加物
 
 以下はシェルや Neovim が動くために必須ではない。`.profile` とキーマップが参照しているから存在している。
 

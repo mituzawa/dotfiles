@@ -395,3 +395,31 @@ win-sync.sh push [name ...]   # リポジトリ -> Windows
 ### これが作られた理由となったドリフト
 
 `windows/.wslconfig` は `57f7453` でコミットされたが、その後どこにも届いていなかった — `TARGETS` に入っておらず、他の仕組みも無かった。`win-sync.sh` を書いた時点で、リポジトリは 16GB / 8 プロセッサ / 32GB swap を要求していたのに `C:\Users\mituz\.wslconfig` は 8GB / 4 / 2GB と書いてあり、動作中の WSL は 4 CPU と 7.8GB だった。コミットされた値は一度も適用されたことがなかったのである。最初の `pull` では、動作中の値の方を正とした。
+
+## パッケージ一覧 (`packages/`, `bin/pkg-sync.sh`)
+
+手で入れたパッケージを 4 つのマネージャごとに記録する。`windows/` と同じく `setup.sh` の外にあるデータで、`$HOME` へはリンクしない。
+
+| ファイル | 取得元 | 形式 |
+|---|---|---|
+| `packages.txt` | `apt-mark showmanual` | パッケージ名 |
+| `snap-packages.txt` | `snap list` + `snap info` の `tracking:` | `<name> <channel> [classic]` |
+| `pip-packages.txt` | `pipx list --short` | アプリ名 |
+| `npm-global.txt` | `npm ls -g --depth=0 --parseable` | パッケージ名（`npm`, `corepack` は除外） |
+
+```sh
+pkg-sync.sh diff  [apt|snap|pip|npm ...]   # 差分の表示（既定、読み取り専用）
+pkg-sync.sh dump  [name ...]               # このマシン -> packages/*.txt
+pkg-sync.sh apply [name ...]               # packages/*.txt -> 未インストールのものだけ入れる
+```
+
+骨格は `win-sync.sh` と同じ（`readlink -f "$0"`、未知の名前は一覧付きで拒否）。処理順は常に apt → snap → pip → npm で、apt リストが `snapd`・`pipx`・`npm` を供給する。マネージャのコマンドが無ければそのターゲットだけ `SKIP` する。リストは `#` 以降と空行を無視するので、手で注記を書いてもよい — ただし次の `dump` で消える。
+
+設計上の判断:
+
+- **バージョンを持たない。** 目的は新しいマシンを同じ道具立てにすることで、同じバージョンにすることではない。持たせると `dump` のたびに diff がアップデートで埋まる。
+- **`apply` は追加のみ。** リストに無いものを消すと、記録前に入れたものや一時的に入れたものを巻き込む。逆向きの差は `diff` の `+ not listed` で見える。
+- **`pip-packages.txt` は pipx。** Ubuntu 24.04 の Python 3.12 は `EXTERNALLY-MANAGED` なので `pip install --user` は PEP 668 で拒否される。実際に入っていたのも pipx の `compiledb` / `scan-build` / `uv` だけで、`~/.local/lib/python3.10` は今はもう無い 3.10 の残骸（`fonttools` の `ttx` など `~/.local/bin` の一部はそこを向いた死んだスクリプト）。ファイル名は `pip-` のままにした。
+- **snap は依存を落とす。** `snap list` には自動で入ったものが並ぶので、Notes が `base`/`snapd` のもの、`meta/snap.yaml` に `apps:` が無いもの（`gtk-common-themes`, `gnome-*` などの content snap）、他の snap が `default-provider` に名指ししているもの（chromium に対する `mesa-2404`, `cups`）を除く。これらは名指しした側を入れれば snapd が自分で引いてくる。channel を `snap info` から取るのは、`snap list` が長い channel を `latest/stable/…` に切り詰めるため。
+- **apt はサードパーティを `SKIP` する。** `apt-mark showmanual` には `google-chrome-stable` と `tailscale*` が含まれるが、新しいマシンではそのリポジトリがまだ無い。`apt-cache policy` に Candidate が無いものを一括インストールから外さないと、`apt-get install` 全体が失敗する。base system のパッケージ (`ubuntu-minimal` など) も並ぶが、すでに入っているので無害。
+- **npm の `sudo`。** prefix が `/usr/local`（apt の nodejs の既定）なので書き込めないときだけ `sudo` を付ける。
