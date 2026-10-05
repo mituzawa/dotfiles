@@ -226,7 +226,7 @@ wasmtime のエントリだけは素直に書けない。`WASMTIME_HOME` はリ�
 
 `bin/wasm-ld` は例外で、手で打たれる唯一のものに対するシムである。`WASI_SDK_PATH` が未設定のときはインストールパスにフォールバックする。非ログインシェルではそれを export する `.profile` が走らないので、この状況は実際に起きる。`lld` ではなく `$WASI_SDK_PATH/bin/wasm-ld` を exec しているのは意図的で、そのファイルは `lld` へのシンボリックリンクであり、LLD は `argv[0]` からドライバを選ぶ — つまり `ld.lld` や `lld-link` ではなく wasm リンカを選ばせているのは名前である。
 
-リストに残っているものはいずれも `/usr/bin` と衝突しない。`~/.local/bin` は apt パッケージに対して `docutils` と `rst2*` スクリプトを勝ち取るが、それこそが pip のユーザインストールの目的である。wamr のビルドディレクトリには `iwasm` と `test_wrgsbase` しか無い。
+リストに残っているものはいずれも `/usr/bin` と衝突しない。`~/.local/bin` にあるのは pipx のアプリ（`compiledb`, `scan-build` の 3 コマンド, `uv`/`uvx`）と `claude`/`codex` へのリンクだけである。かつてはここの `docutils` と `rst2*` が apt のものを隠す想定だったが、リンク先の pipx 環境 `sphinx-rtd-theme` が消えて壊れたリンクになっており（bash はそれを飛ばすので実際には `/usr/bin` のものが使われていた）、3.10 の `pip --user` が残した死んだスクリプトとともに削除した。wamr のビルドディレクトリには `iwasm` と `test_wrgsbase` しか無い。
 
 なお mason の `~/.local/share/nvim/mason/bin` はここに無い。Neovim が自分で前置するからであり、フォーマッタのバイナリが nvim の中では解決できて素のシェルでは解決できないのはそのためである。
 
@@ -419,7 +419,7 @@ pkg-sync.sh apply [name ...]               # packages/*.txt -> 未インスト�
 
 - **バージョンを持たない。** 目的は新しいマシンを同じ道具立てにすることで、同じバージョンにすることではない。持たせると `dump` のたびに diff がアップデートで埋まる。
 - **`apply` は追加のみ。** リストに無いものを消すと、記録前に入れたものや一時的に入れたものを巻き込む。逆向きの差は `diff` の `+ not listed` で見える。
-- **`pip-packages.txt` は pipx。** Ubuntu 24.04 の Python 3.12 は `EXTERNALLY-MANAGED` なので `pip install --user` は PEP 668 で拒否される。実際に入っていたのも pipx の `compiledb` / `scan-build` / `uv` だけで、`~/.local/lib/python3.10` は今はもう無い 3.10 の残骸（`fonttools` の `ttx` など `~/.local/bin` の一部はそこを向いた死んだスクリプト）。ファイル名は `pip-` のままにした。
+- **`pip-packages.txt` は pipx。** Ubuntu 24.04 の Python 3.12 は `EXTERNALLY-MANAGED` なので `pip install --user` は PEP 668 で拒否される。実際に入っていたのも pipx の `compiledb` / `scan-build` / `uv` だけで、`~/.local/lib/python3.10` にあった 3.10 時代の `pip --user` の残骸 (442MB) は、3.12 の `sys.path` に載らず誰からも読まれていなかったので削除した。ファイル名は `pip-` のままにした。
 - **snap は依存を落とす。** `snap list` には自動で入ったものが並ぶので、Notes が `base`/`snapd` のもの、`meta/snap.yaml` に `apps:` が無いもの（`gtk-common-themes`, `gnome-*` などの content snap）、他の snap が `default-provider` に名指ししているもの（chromium に対する `mesa-2404`, `cups`）を除く。これらは名指しした側を入れれば snapd が自分で引いてくる。channel を `snap info` から取るのは、`snap list` が長い channel を `latest/stable/…` に切り詰めるため。
 - **apt はサードパーティを `SKIP` する。** `apt-mark showmanual` には `google-chrome-stable` と `tailscale*` が含まれるが、新しいマシンではそのリポジトリがまだ無い。`apt-cache policy` に Candidate が無いものを一括インストールから外さないと、`apt-get install` 全体が失敗する。base system のパッケージ (`ubuntu-minimal` など) も並ぶが、すでに入っているので無害。
 - **npm の `sudo`。** prefix が `/usr/local`（apt の nodejs の既定）なので書き込めないときだけ `sudo` を付ける。
