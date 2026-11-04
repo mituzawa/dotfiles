@@ -119,6 +119,33 @@ Nerd フォントの私用領域 (PUA) を要求しているのは 4 か所:
 
 `<built-in>, BuiltIn` と出れば内蔵フォールバック、ファイルパスが出れば OS にインストールされたフォント。`wezterm.lua` に `config.font` を足せばこの暗黙の依存は消えるが、その代わり wezterm 側にも Nerd フォントのインストールが必須になる。
 
+#### このマシンでの現状 — Mono 系 (NFM) は入っていない
+
+JetBrainsMono Nerd Font は `C:\Windows\Fonts` にシステム全体として入っている（Nerd Fonts 3.4.0、2026-06-26）。zip に入っている 6 ファミリーのうち、残っているのは 4 つだけである:
+
+| ファミリー名 | ファイル | 状態 |
+|---|---|---|
+| `JetBrainsMono NF` | `JetBrainsMonoNerdFont-*.ttf` | あり — Windows Terminal の face はこれに解決される |
+| `JetBrainsMono NFP` | `JetBrainsMonoNerdFontPropo-*.ttf` | あり |
+| `JetBrainsMonoNL NF` | `JetBrainsMonoNLNerdFont-*.ttf` | あり |
+| `JetBrainsMonoNL NFP` | `JetBrainsMonoNLNerdFontPropo-*.ttf` | あり |
+| `JetBrainsMono NFM` | `JetBrainsMonoNerdFontMono-*.ttf` | **無し** |
+| `JetBrainsMonoNL NFM` | `JetBrainsMonoNLNerdFontMono-*.ttf` | **無し** |
+
+各ファミリーは 16 ファイル（8 ウェイト × 立体/イタリック）で、計 64 ファイル。HKLM の `Fonts` キーも同じ 4 ファミリーを登録している。ユーザー単位のフォントフォルダ (`%LOCALAPPDATA%\Microsoft\Windows\Fonts`) には Nerd フォントが 1 つも無い。
+
+NFM を名指ししている設定はこのリポジトリに無いので、欠けていても実害は無い。必要になったら（たとえば `config.font` で Mono 版を指定するなら）、配布 zip から `*NerdFontMono-*.ttf` だけを入れ直せばよい。
+
+こうなった経緯は次のとおり。2026-11-04 に Mono 系 3.5.1 の 32 ファイルをユーザー単位で重ねて入れ、重複として「設定 → 個人用設定 → フォント」からアンインストールした。このとき、システム側にあった 3.4.0 の NFM も一緒に消えた。**設定アプリはフォントを置き場所ではなくファミリー名で扱う**ので、同名のファミリーがユーザー側とシステム側の両方にあると、片方だけを消すことはできない。ファイルを直接 `rm` すると、HKCU / HKLM の値が存在しないパスを指したまま残るので、それも代わりにはならない。
+
+現状は次で確かめられる:
+
+```sh
+for d in /mnt/c/Windows/Fonts /mnt/c/Users/mituz/AppData/Local/Microsoft/Windows/Fonts; do
+    echo "== $d"; ls "$d" | grep -i nerdfont | sed -E 's/-[A-Za-z]+\.ttf$//' | sort | uniq -c
+done
+```
+
 Linux 側にフォントは要らない。fontconfig すら入っていない (`fc-list` が無い)。
 
 ### ファジーファインダ (ddu.vim)
