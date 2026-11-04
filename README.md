@@ -21,6 +21,8 @@ Linux/WSL2 環境の個人用 dotfiles。bash、Neovim、`bin/` 以下のシェ�
 
 WSL2 + Ubuntu 24.04。何よりも先に **JetBrainsMono Nerd Font** を Windows にインストールすること。Windows Terminal の Ubuntu プロファイルがこの face を名指ししており、無いと Windows Terminal は黙ってフォールバックし、nvim-web-devicons も ddu の `converter_devicon` も lightline の powerline セパレータも軒並み豆腐になる。wezterm は任意 — 何もこれに依存していない — だが設定は `windows/` にあり、手順 9 で復元される。
 
+フォントは Nerd Fonts の Releases (<https://github.com/ryanoasis/nerd-fonts/releases>) から取得する。最新版の zip は <https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip> で直接落とせる。展開した `JetBrainsMonoNerdFont-*.ttf` を右クリック →「インストール」し、Windows Terminal を再起動する。v3 未満の古い版は Material Design Icons の符号位置が異なり、nvim-web-devicons の一部のアイコンが化けるので使わないこと。
+
 wezterm は face を名指し **していない**。`windows/wezterm/wezterm.lua` が設定しているのは `font_size` だけで、同梱の JetBrains Mono（Nerd Font ビルドではない方）を使う。それでも字形が欠けないのは、wezterm が *Symbols Nerd Font Mono* を実行ファイルに内蔵していて私用領域をそこへフォールバックさせ、powerline セパレータは `custom_block_glyphs` で自前描画するため。実際にどのフォントで解決されたかは次で確認できる。
 
 ```sh
